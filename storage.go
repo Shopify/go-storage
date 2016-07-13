@@ -74,42 +74,42 @@ func FSFromURL(path string) FS {
 	return Local(path)
 }
 
-// PrefixFS creates a FS which wraps fs and prefixes all paths with prefix.
-func PrefixFS(fs FS, prefix string) FS {
-	return prefixFS{
-		prefix: prefix,
+// Prefix creates a FS which wraps fs and prefixes all paths with prefix.
+func Prefix(fs FS, prefix string) FS {
+	return pfx{
 		fs:     fs,
+		prefix: prefix,
 	}
 }
 
-type prefixFS struct {
-	prefix string
+type pfx struct {
 	fs     FS
+	prefix string
 }
 
-func (pfs prefixFS) addPrefix(path string) string {
-	return fmt.Sprintf("%v%v", pfs.prefix, path)
+func (p pfx) addPrefix(path string) string {
+	return fmt.Sprintf("%v%v", p.prefix, path)
 }
 
 // Open implements FS.
-func (pfs prefixFS) Open(ctx context.Context, path string) (*File, error) {
-	return pfs.fs.Open(ctx, pfs.addPrefix(path))
+func (p pfx) Open(ctx context.Context, path string) (*File, error) {
+	return p.fs.Open(ctx, p.addPrefix(path))
 }
 
 // Create implements FS.
-func (pfs prefixFS) Create(ctx context.Context, path string) (io.WriteCloser, error) {
-	return pfs.fs.Create(ctx, pfs.addPrefix(path))
+func (p pfx) Create(ctx context.Context, path string) (io.WriteCloser, error) {
+	return p.fs.Create(ctx, p.addPrefix(path))
 }
 
 // Delete implements FS.
-func (pfs prefixFS) Delete(ctx context.Context, path string) error {
-	return pfs.fs.Delete(ctx, pfs.addPrefix(path))
+func (p pfx) Delete(ctx context.Context, path string) error {
+	return p.fs.Delete(ctx, p.addPrefix(path))
 }
 
 // Walk implements FS.
-func (pfs prefixFS) Walk(ctx context.Context, path string, fn WalkFn) error {
-	return pfs.fs.Walk(ctx, pfs.addPrefix(path), func(path string) error {
-		path = strings.TrimPrefix(path, pfs.prefix)
+func (p pfx) Walk(ctx context.Context, path string, fn WalkFn) error {
+	return p.fs.Walk(ctx, p.addPrefix(path), func(path string) error {
+		path = strings.TrimPrefix(path, p.prefix)
 		return fn(path)
 	})
 }
