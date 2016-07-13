@@ -146,8 +146,8 @@ if err != nil {
 If you're writing code that relies on a set directory structure, it can be very messy to have to pass path-patterns around.  You can avoid this by wrapping `storage.FS` implementations with `storage.Prefix` that rewrites all incoming paths.
 
 ```go
-modelFS := storage.Prefix(rootFS, "/models")
-f, err := modelFS.Open(context.Background(), "file.json") // will call rootFS.Open with path "/models/file.json"
+modelFS := storage.Prefix(rootFS, "models/")
+f, err := modelFS.Open(context.Background(), "file.json") // will call rootFS.Open with path "models/file.json"
 if err != nil {
 	// do something
 }
