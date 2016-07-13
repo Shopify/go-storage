@@ -3,11 +3,11 @@
 [![Build Status](https://travis-ci.org/sajari/storage.svg?branch=master)](https://travis-ci.org/sajari/storage)
 [![GoDoc](https://godoc.org/github.com/sajari/storage?status.svg)](https://godoc.org/github.com/sajari/storage)
 
-storage is a Go package which provides functionality which abstracts file systems (Local, in memory, Google Cloud Storage, S3) into a common interface.  It includes convenience wrappers and types for simplifying common file system use cases such as caching, prefix isolation and more!
+storage is a Go package providing functionality to abstract file systems (local, in-memory, Google Cloud Storage, S3) into a few common interfaces.  It includes convenience wrappers and types for simplifying common file system use cases such as caching, prefix isolation and more!
 
 # Requirements
 
-- [Go 1.4+](http://golang.org/dl/)
+- [Go 1.5+](http://golang.org/dl/)
 
 # Usage
 
