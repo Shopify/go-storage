@@ -11,12 +11,11 @@ type WalkFn func(path string) error
 
 // Walker is an interface which defines the Walk method.
 type Walker interface {
-	// Walk traverses a path listing by prefix, calling fn with each object path rewritten
-	// to be relative to the underlying filesystem and provided path.
+	// Walk traverses a path listing by prefix, calling fn with each path.
 	Walk(ctx context.Context, path string, fn WalkFn) error
 }
 
-// List lists directories and files in a path using the given filesystem.
+// List runs the Walker on the given path and returns the list of visited paths.
 func List(ctx context.Context, w Walker, path string) ([]string, error) {
 	var out []string
 	if err := w.Walk(ctx, path, func(path string) error {

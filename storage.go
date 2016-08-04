@@ -49,15 +49,15 @@ func (e *notExistError) Error() string {
 type FS interface {
 	Walker
 
-	// Open opens an existing file in the filesystem.
+	// Open opens an existing file at path in the filesystem.
 	Open(ctx context.Context, path string) (*File, error)
 
-	// Create makes a new file in the filesystem.  Callers must close the
+	// Create makes a new file at path in the filesystem.  Callers must close the
 	// returned WriteCloser and check the error to be sure that the file
 	// was successfully written.
 	Create(ctx context.Context, path string) (io.WriteCloser, error)
 
-	// Delete removes a file from the filesystem.
+	// Delete removes a path from the filesystem.
 	Delete(ctx context.Context, path string) error
 }
 
@@ -106,7 +106,7 @@ func (p pfx) Delete(ctx context.Context, path string) error {
 	return p.fs.Delete(ctx, p.addPrefix(path))
 }
 
-// Walk implements FS.
+// Walk transverses all paths underneath path, calling fn on each visited path.
 func (p pfx) Walk(ctx context.Context, path string, fn WalkFn) error {
 	return p.fs.Walk(ctx, p.addPrefix(path), func(path string) error {
 		path = strings.TrimPrefix(path, p.prefix)
