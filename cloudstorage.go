@@ -4,11 +4,12 @@ import (
 	"fmt"
 	"io"
 
-	"google.golang.org/cloud"
-	"google.golang.org/cloud/storage"
-
 	"golang.org/x/net/context"
 	"golang.org/x/oauth2/google"
+
+	"google.golang.org/api/option"
+
+	"cloud.google.com/go/storage"
 )
 
 // CloudStorage implements FS and uses Google Cloud Storage as the underlying
@@ -101,7 +102,7 @@ func (c *CloudStorage) bucketHandle(ctx context.Context, scope string) (*storage
 		return nil, fmt.Errorf("cloud storage: unable to retrieve default token source: %v", err)
 	}
 
-	client, err := storage.NewClient(ctx, cloud.WithTokenSource(ts))
+	client, err := storage.NewClient(ctx, option.WithTokenSource(ts))
 	if err != nil {
 		return nil, fmt.Errorf("cloud storage: unable to get client: %v", err)
 	}
