@@ -70,9 +70,9 @@ func (l Local) Create(_ context.Context, path string) (io.WriteCloser, error) {
 	return f, nil
 }
 
-// Delete implements FS.
+// Delete implements FS.  All files underneath path will be removed.
 func (l Local) Delete(_ context.Context, path string) error {
-	return os.Remove(l.fullPath(path))
+	return os.RemoveAll(l.fullPath(path))
 }
 
 // Walk implements Walker.
