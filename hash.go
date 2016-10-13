@@ -65,7 +65,7 @@ func (w *hashWriteCloser) Write(b []byte) (int, error) {
 	return n, nil
 }
 
-func (w *hashWriteCloser) Close() error {
+func (w *hashWriteCloser) Close() (err error) {
 	hashPath := fmt.Sprintf("%x", w.hfs.h.Sum(nil))
 	if err := w.hfs.gs.Set(w.path, hashPath); err != nil {
 		return err
@@ -75,10 +75,14 @@ func (w *hashWriteCloser) Close() error {
 	if err != nil {
 		return err
 	}
-	if _, err := io.Copy(fsw, w.buf); err != nil {
-		return err
-	}
-	return fsw.Close()
+	defer func() {
+		if err1 := fsw.Close(); err == nil {
+			err = err1
+		}
+	}()
+
+	_, err = io.Copy(fsw, w.buf)
+	return err
 }
 
 // TODO(trent): make sure that you document the FS.Create method
