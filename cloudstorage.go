@@ -7,6 +7,7 @@ import (
 	"golang.org/x/net/context"
 	"golang.org/x/oauth2/google"
 
+	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
 
 	"cloud.google.com/go/storage"
@@ -70,28 +71,28 @@ func (c *CloudStorage) Delete(ctx context.Context, path string) error {
 
 // Walk implements FS.
 func (c *CloudStorage) Walk(ctx context.Context, path string, fn WalkFn) error {
-	q := &storage.Query{
-		Prefix: path,
-	}
-
 	bh, err := c.bucketHandle(ctx, storage.ScopeReadOnly)
 	if err != nil {
 		return err
 	}
 
-	for q != nil {
-		l, err := bh.List(ctx, q)
+	it := bh.Objects(ctx, &storage.Query{
+		Prefix: path,
+	})
+
+	for {
+		r, err := it.Next()
+		if err == iterator.Done {
+			break
+		}
 		if err != nil {
+			// TODO(dhowden): Properly handle this error.
 			return err
 		}
 
-		for _, r := range l.Results {
-			if err = fn(r.Name); err != nil {
-				return err
-			}
+		if err = fn(r.Name); err != nil {
+			return err
 		}
-
-		q = l.Next
 	}
 	return nil
 }
