@@ -11,7 +11,7 @@ storage is a Go package which abstracts file systems (local, in-memory, Google C
 
 # Usage
 
-For more detailed details see [http://godoc.org/github.com/sajari/storage/](http://godoc.org/github.com/sajari/storage/).
+For full documentation see: [http://godoc.org/github.com/sajari/storage/](http://godoc.org/github.com/sajari/storage/).
 
 All storage in this package follow two simple interfaces designed for using file systems.
 
@@ -19,7 +19,8 @@ All storage in this package follow two simple interfaces designed for using file
 type FS interface {
 	Walker
 
-	// Open opens an existing file in the filesystem.
+	// Open opens an existing file at path in the filesystem.  Callers must close the
+	// File when done to release all underlying resources.
 	Open(ctx context.Context, path string) (*File, error)
 
 	// Create makes a new file in the filesystem.  Callers must close the
@@ -50,8 +51,10 @@ Local is the default implementation of a local file system (i.e. using `os.Open`
 local := storage.Local("/some/root/path")
 f, err := local.Open(context.Background(), "file.json") // will open "/some/root/path/file.json"
 if err != nil {
-	// do something
+	// ...
 }
+// ...
+f.Close()
 ```
 
 ## Memory
@@ -62,13 +65,13 @@ Mem is the default in-memory implementation of a file system.
 mem := storage.Mem()
 wc, err := mem.Create(context.Background(), "file.txt")
 if err != nil {
-	// do something
+	// ...
 }
 if _, err := io.WriteString(wc, "Hello World!"); err != nil {
-	// do something
+	// ...
 }
 if err := wc.Close(); err != nil {
-	// do something
+	// ...
 }
 ```
 
@@ -77,8 +80,10 @@ And now:
 ```go
 f, err := mem.Open(context.Background(), "file.txt")
 if err != nil {
-	// do something
+	// ...
 }
+// ...
+f.Close()
 ```
 
 ## Google Cloud Storage
@@ -89,8 +94,10 @@ CloudStorage is the default implementation of Google Cloud Storage.  This uses [
 store := storage.CloudStorage{Bucket:"some-bucket"}
 f, err := store.Open(context.Background(), "file.json") // will fetch "gs://some-bucket/file.json"
 if err != nil {
-	// do something
+	// ...
 }
+// ...
+f.Close()
 ```
 
 ## S3
@@ -110,13 +117,17 @@ local := storage.Local("/scratch-space")
 fs := storage.Cache(src, local)
 f, err := fs.Open(context.Background(), "file.json") // will try src then jump to cache ("gs://some-bucket/file.json")
 if err != nil {
-	// do something
+	// ...
 }
+// ...
+f.Close()
 
 f, err := fs.Open(context.Background(), "file.json") // should now be cached ("/scratch-space/file.json")
 if err != nil {
-	// do something
+	// ...
 }
+// ...
+f.Close()
 ```
 
 This is particularly useful when distributing files across multiple regions or between cloud providers.  For instance, we could add the following code to the previous example:
@@ -132,13 +143,17 @@ fs2 := storage.Cache(mainSrc, fs) // fs is from previous snippet
 //    way back to the caller.
 f, err := fs2.Open(context.Background(), "file.json") // will fetch "gs://some-bucket-in-another-region/file.json"
 if err != nil {
-	// do something
+	// ...
 }
+// ...
+f.Close()
 
 f, err := fs2.Open(context.Background(), "file.json") // will fetch "/scratch-space/file.json"
 if err != nil {
-	// do something
+	// ...
 }
+// ...
+f.Close()
 ```
 
 ### Adding prefixes to paths
@@ -149,8 +164,10 @@ If you're writing code that relies on a set directory structure, it can be very 
 modelFS := storage.Prefix(rootFS, "models/")
 f, err := modelFS.Open(context.Background(), "file.json") // will call rootFS.Open with path "models/file.json"
 if err != nil {
-	// do something
+	// ...
 }
+// ...
+f.Close()
 ```
 
 It's also now simple to write wrapper functions to abstract out more complex directory structures.
@@ -163,6 +180,8 @@ func UserFS(fs storage.FS, userID, mediaType string) FS {
 userFS := UserFS(rootFS, "1111", "pics")
 f, err := userFS.Open(context.Background(), "beach.png") // will call rootFS.Open with path "1111/pics/beach.png"
 if err != nil {
-	// do something
+	// ...
 }
+// ...
+f.Close()
 ```
