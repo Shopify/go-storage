@@ -26,7 +26,7 @@ type isNotExister interface {
 }
 
 // IsNotExist returns a boolean indicating whether the error is known to report that
-// a path.
+// a path does not exist.
 func IsNotExist(err error) bool {
 	e, ok := err.(isNotExister)
 	return ok && e.isNotExist()
@@ -42,14 +42,15 @@ func (e *notExistError) isNotExist() bool { return true }
 
 // Error implements error
 func (e *notExistError) Error() string {
-	return fmt.Sprintf("storage %v: file does not exist", e.Path)
+	return fmt.Sprintf("storage %v: path does not exist", e.Path)
 }
 
 // FS is an interface which defines a virtual filesystem.
 type FS interface {
 	Walker
 
-	// Open opens an existing file at path in the filesystem.
+	// Open opens an existing file at path in the filesystem.  Callers must close the
+	// File when done to release all underlying resources.
 	Open(ctx context.Context, path string) (*File, error)
 
 	// Create makes a new file at path in the filesystem.  Callers must close the
