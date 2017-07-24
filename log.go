@@ -10,7 +10,7 @@ import (
 )
 
 // NewLogFS creates a new FS which logs all calls to FS.
-func NewLogFS(fs FS, name string, l *log.Logger) FS {
+func NewLogFS(fs FS, name string, l *log.Logger) *LogFS {
 	return &LogFS{
 		fs:     fs,
 		name:   name,
@@ -63,7 +63,7 @@ func (l *LogFS) Walk(ctx context.Context, path string, fn WalkFn) error {
 
 // NewTraceFS creates a new FS which wraps an FS and records calls using
 // golang.org/x/net/trace.
-func NewTraceFS(fs FS, name string) FS {
+func NewTraceFS(fs FS, name string) *TraceFS {
 	return &TraceFS{
 		fs:   fs,
 		name: name,
@@ -126,7 +126,7 @@ func (t *TraceFS) Walk(ctx context.Context, path string, fn WalkFn) error {
 }
 
 // NewErrCountFS creates an FS which records stats based on usage.
-func NewErrCountFS(fs FS, name string, err error) FS {
+func NewErrCountFS(fs FS, name string, err error) *ErrCountFS {
 	status := expvar.NewMap(name)
 	status.Set("open.total", new(expvar.Int))
 	status.Set("open.count", new(expvar.Int))
