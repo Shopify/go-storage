@@ -7,7 +7,7 @@ storage is a Go package which abstracts file systems (local, in-memory, Google C
 
 # Requirements
 
-- [Go 1.5+](http://golang.org/dl/)
+- [Go 1.6+](http://golang.org/dl/)
 
 # Usage
 
