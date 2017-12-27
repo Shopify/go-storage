@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 	"testing"
 
-	"github.com/sajari/storage"
+	"code.sajari.com/storage"
 )
 
 func TestMemOpen(t *testing.T) {
