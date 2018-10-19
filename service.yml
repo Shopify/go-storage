@@ -1,0 +1,6 @@
+# https://services.shopify.io/services/go-storage/production
+org_line: 
+owners:
+- Shopify/dev-infra
+production:
+  classification: library
