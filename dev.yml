@@ -1,0 +1,17 @@
+name: git-mirror
+
+up:
+  - go:
+      version: "1.11.1"
+      tools:
+        - github.com/alecthomas/gometalinter
+        # gosumcheck is not installed by gometalinter
+        - github.com/haya14busa/gosum/cmd/gosumcheck
+
+commands:
+  test: go test -race ./...
+  style:
+    run: bin/style
+    desc: Static verification using gometalinter or autofix issues when possible.
+    syntax:
+      optional: --fix

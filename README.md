@@ -1,9 +1,8 @@
 # Storage
 
-[![Build Status](https://travis-ci.org/sajari/storage.svg?branch=master)](https://travis-ci.org/sajari/storage)
-[![GoDoc](https://godoc.org/code.sajari.com/storage?status.svg)](https://godoc.org/code.sajari.com/storage)
-
 storage is a Go package which abstracts file systems (local, in-memory, Google Cloud Storage, S3) into a few interfaces.  It includes convenience wrappers for simplifying common file system use cases such as caching, prefix isolation and more!
+
+Forked from https://github.com/sajari/storage
 
 # Requirements
 
@@ -12,12 +11,10 @@ storage is a Go package which abstracts file systems (local, in-memory, Google C
 # Installation
 
 ```console
-$ go get code.sajari.com/storage
+$ go get github.com/Shopify/go-storage
 ```
 
 # Usage
-
-For full documentation see: [http://godoc.org/code.sajari.com/storage/](http://godoc.org/code.sajari.com/storage/).
 
 All storage in this package follow two simple interfaces designed for using file systems.
 
@@ -54,7 +51,7 @@ type Walker interface {
 Local is the default implementation of a local file system (i.e. using `os.Open` etc).
 
 ```go
-local := storage.Local("/some/root/path")
+local := storage.NewLocalFS("/some/root/path")
 f, err := local.Open(context.Background(), "file.json") // will open "/some/root/path/file.json"
 if err != nil {
 	// ...
@@ -68,7 +65,7 @@ f.Close()
 Mem is the default in-memory implementation of a file system.
 
 ```go
-mem := storage.Mem()
+mem := storage.NewMemoryFS()
 wc, err := mem.Create(context.Background(), "file.txt")
 if err != nil {
 	// ...
@@ -97,7 +94,7 @@ f.Close()
 CloudStorage is the default implementation of Google Cloud Storage.  This uses [https://godoc.org/golang.org/x/oauth2/google#DefaultTokenSource](`google.DefaultTokenSource`) for autentication.
 
 ```go
-store := storage.CloudStorage{Bucket:"some-bucket"}
+store := storage.NewCloudStorageFS("some-bucket")
 f, err := store.Open(context.Background(), "file.json") // will fetch "gs://some-bucket/file.json"
 if err != nil {
 	// ...
@@ -108,7 +105,16 @@ f.Close()
 
 ## S3
 
-Not yet implemented!  Watch this space.
+S3 is the default implementation for AWS S3. This uses [aws-sdk-go/aws/session.NewSession](http://docs.aws.amazon.com/sdk-for-go/api/aws/session/#NewSession) for authentication.
+ ```go
+store := storage.S3{Bucket:"some-bucket"}
+f, err := store.Open(context.Background(), "file.json") // will fetch "s3://some-bucket/file.json
+if err != nil {
+	// ...
+}
+// ...
+f.Close()
+```
 
 ## Wrappers and Helpers
 
@@ -117,10 +123,10 @@ Not yet implemented!  Watch this space.
 To use Cloud Storage as a source file system, but cache all opened files in a local filesystem:
 
 ```go
-src := storage.CloudStorage{Bucket:"some-bucket"}
-local := storage.Local("/scratch-space")
+src := storage.NewCloudStorageFS("some-bucket")
+local := storage.NewLocalFS("/scratch-space")
 
-fs := storage.Cache(src, local)
+fs := storage.NewCacheFS(src, local)
 f, err := fs.Open(context.Background(), "file.json") // will try src then jump to cache ("gs://some-bucket/file.json")
 if err != nil {
 	// ...
@@ -139,7 +145,7 @@ f.Close()
 This is particularly useful when distributing files across multiple regions or between cloud providers.  For instance, we could add the following code to the previous example:
 
 ```go
-mainSrc := storage.CloudStorage{Bucket:"some-bucket-in-another-region"}
+mainSrc := storage.NewCloudStorage("some-bucket-in-another-region")
 fs2 := storage.Cache(mainSrc, fs) // fs is from previous snippet
 
 // Open will:
@@ -167,7 +173,7 @@ f.Close()
 If you're writing code that relies on a set directory structure, it can be very messy to have to pass path-patterns around.  You can avoid this by wrapping `storage.FS` implementations with `storage.Prefix` that rewrites all incoming paths.
 
 ```go
-modelFS := storage.Prefix(rootFS, "models/")
+modelFS := storage.NewPrefixFS(rootFS, "models/")
 f, err := modelFS.Open(context.Background(), "file.json") // will call rootFS.Open with path "models/file.json"
 if err != nil {
 	// ...
@@ -179,11 +185,11 @@ f.Close()
 It's also now simple to write wrapper functions to abstract out more complex directory structures.
 
 ```go
-func UserFS(fs storage.FS, userID, mediaType string) FS {
+func NewUserFS(fs storage.FS, userID, mediaType string) FS {
 	return storage.Prefix(fs, fmt.Sprintf("%v/%v", userID, userType))
 }
 
-userFS := UserFS(rootFS, "1111", "pics")
+userFS := NewUserFS(rootFS, "1111", "pics")
 f, err := userFS.Open(context.Background(), "beach.png") // will call rootFS.Open with path "1111/pics/beach.png"
 if err != nil {
 	// ...

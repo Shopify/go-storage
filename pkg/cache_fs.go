@@ -1,25 +1,24 @@
 package storage
 
 import (
+	"context"
 	"io"
-
-	"golang.org/x/net/context"
 )
 
-// Cache creates an FS implementation which caches files opened from src into cache.
-func Cache(src, cache FS) FS {
-	return &cachedFS{
+// NewCacheFS creates an FS implementation which caches files opened from src into cache.
+func NewCacheFS(src, cache FS) FS {
+	return &cacheFS{
 		src:   src,
 		cache: cache,
 	}
 }
 
-type cachedFS struct {
+type cacheFS struct {
 	src, cache FS
 }
 
 // Open implements FS.
-func (c *cachedFS) Open(ctx context.Context, path string) (*File, error) {
+func (c *cacheFS) Open(ctx context.Context, path string) (*File, error) {
 	f, err := c.cache.Open(ctx, path)
 	if err == nil {
 		return f, nil
@@ -57,7 +56,7 @@ func (c *cachedFS) Open(ctx context.Context, path string) (*File, error) {
 }
 
 // Delete implements FS.
-func (c *cachedFS) Delete(ctx context.Context, path string) error {
+func (c *cacheFS) Delete(ctx context.Context, path string) error {
 	err := c.cache.Delete(ctx, path)
 	if err != nil && !IsNotExist(err) {
 		return err
@@ -66,11 +65,15 @@ func (c *cachedFS) Delete(ctx context.Context, path string) error {
 }
 
 // Create implements FS.
-func (c *cachedFS) Create(ctx context.Context, path string) (io.WriteCloser, error) {
+func (c *cacheFS) Create(ctx context.Context, path string) (io.WriteCloser, error) {
+	err := c.cache.Delete(ctx, path)
+	if err != nil && !IsNotExist(err) {
+		return nil, err
+	}
 	return c.src.Create(ctx, path)
 }
 
 // Walk implements FS.
-func (c *cachedFS) Walk(ctx context.Context, path string, fn WalkFn) error {
+func (c *cacheFS) Walk(ctx context.Context, path string, fn WalkFn) error {
 	return c.src.Walk(ctx, path, fn)
 }

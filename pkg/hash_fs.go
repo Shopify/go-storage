@@ -2,17 +2,16 @@ package storage
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"hash"
 	"io"
-
-	"golang.org/x/net/context"
 )
 
-// HashFS creates a content addressable filesystem using hash.Hash
+// NewHashFS creates a content addressable filesystem using hash.Hash
 // to sum the content and store it using that name.
-func HashFS(h hash.Hash, fs FS, gs GetSetter) FS {
+func NewHashFS(h hash.Hash, fs FS, gs GetSetter) FS {
 	return &hashFS{
 		h:  h,
 		fs: fs,

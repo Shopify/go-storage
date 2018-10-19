@@ -2,14 +2,20 @@ package storage
 
 import (
 	"bytes"
+	"context"
 	"io"
 	"io/ioutil"
 	"strings"
 	"sync"
 	"time"
-
-	"golang.org/x/net/context"
 )
+
+// NewMemoryFS creates a a basic in-memory implementation of FS.
+func NewMemoryFS() FS {
+	return &memoryFS{
+		data: make(map[string]*memFile),
+	}
+}
 
 type memFile struct {
 	data    []byte
@@ -25,21 +31,14 @@ func (f *memFile) size() int64 {
 	return int64(len(f.data))
 }
 
-// Mem creates a a basic in-memory implementation of FS.
-func Mem() FS {
-	return &mem{
-		data: make(map[string]*memFile),
-	}
-}
-
-type mem struct {
+type memoryFS struct {
 	sync.RWMutex
 
 	data map[string]*memFile
 }
 
 // Open implements FS.
-func (m *mem) Open(_ context.Context, path string) (*File, error) {
+func (m *memoryFS) Open(_ context.Context, path string) (*File, error) {
 	m.RLock()
 	f, ok := m.data[path]
 	m.RUnlock()
@@ -61,7 +60,7 @@ type writingFile struct {
 	*bytes.Buffer
 	path string
 
-	m *mem
+	m *memoryFS
 }
 
 func (wf *writingFile) Close() error {
@@ -76,7 +75,7 @@ func (wf *writingFile) Close() error {
 }
 
 // Create implements FS.  NB: Callers must close the io.WriteCloser to create the file.
-func (m *mem) Create(_ context.Context, path string) (io.WriteCloser, error) {
+func (m *memoryFS) Create(_ context.Context, path string) (io.WriteCloser, error) {
 	return &writingFile{
 		Buffer: &bytes.Buffer{},
 		path:   path,
@@ -85,7 +84,7 @@ func (m *mem) Create(_ context.Context, path string) (io.WriteCloser, error) {
 }
 
 // Delete implements FS.
-func (m *mem) Delete(_ context.Context, path string) error {
+func (m *memoryFS) Delete(_ context.Context, path string) error {
 	m.Lock()
 	delete(m.data, path)
 	m.Unlock()
@@ -93,7 +92,7 @@ func (m *mem) Delete(_ context.Context, path string) error {
 }
 
 // Walk implements FS.
-func (m *mem) Walk(_ context.Context, path string, fn WalkFn) error {
+func (m *memoryFS) Walk(_ context.Context, path string, fn WalkFn) error {
 	var list []string
 	m.RLock()
 	for k := range m.data {

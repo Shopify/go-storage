@@ -1,9 +1,8 @@
 package storage
 
 import (
+	"context"
 	"sync"
-
-	"golang.org/x/net/context"
 )
 
 // WalkFn is a function type which is passed to Walk.

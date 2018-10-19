@@ -1,0 +1,25 @@
+containers:
+  ci:
+    docker: gcr.io/shopify-docker-images/cloud/galaxy-go-builder:1.2
+    workdir: /go/src/github.com/Shopify/go-storage
+
+default_container: ci
+
+env:
+  ANNOTATIONS_PATH: build/annotations.json
+  GITMIRROR_ENV: test
+  JUNIT_PATH: build/junit.xml
+
+steps:
+  - label: 'Unit tests'
+    timeout: 10m
+    run:
+      - sudo apk add --no-cache xmlstarlet
+      - dep ensure
+      - go test ./...
+    cache:
+      - vendor
+    artifact_paths:
+      - path: build
+        pattern: "{annotations.json,junit.xml}"
+        junitxml: junit.xml
