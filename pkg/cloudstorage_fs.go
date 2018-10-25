@@ -2,7 +2,6 @@ package storage
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"time"
 
@@ -10,6 +9,7 @@ import (
 	"github.com/google/go-cloud/blob"
 	"github.com/google/go-cloud/blob/gcsblob"
 	"github.com/google/go-cloud/gcp"
+	"github.com/pkg/errors"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
@@ -37,11 +37,11 @@ type cloudStorageFS struct {
 func (c *cloudStorageFS) URL(ctx context.Context, path string, options *URLOptions) (string, error) {
 	creds, err := c.findCredentials(ctx, storage.ScopeReadOnly)
 	if err != nil {
-		return "", fmt.Errorf("cloud storage: unable to retrieve default token source: %v", err)
+		return "", errors.Wrap(err, "cloud storage: unable to retrieve default token source")
 	}
 	config, err := google.JWTConfigFromJSON(creds.JSON, storage.ScopeReadOnly)
 	if err != nil {
-		return "", fmt.Errorf("cloud storage: parse credentials: %v", err)
+		return "", errors.Wrap(err, "cloud storage: parse credentials")
 	}
 
 	var expires time.Time
@@ -140,7 +140,7 @@ func (c *cloudStorageFS) findCredentials(ctx context.Context, scope string, extr
 func (c *cloudStorageFS) blobBucketHandle(ctx context.Context, scope string, extraScopes ...string) (*blob.Bucket, error) {
 	creds, err := c.findCredentials(ctx, scope, extraScopes...)
 	if err != nil {
-		return nil, fmt.Errorf("cloud storage: unable to retrieve default token source: %v", err)
+		return nil, errors.Wrap(err, "cloud storage: unable to retrieve default token source")
 	}
 
 	client, err := gcp.NewHTTPClient(gcp.DefaultTransport(), gcp.CredentialsTokenSource(creds))
@@ -154,12 +154,12 @@ func (c *cloudStorageFS) blobBucketHandle(ctx context.Context, scope string, ext
 func (c *cloudStorageFS) bucketHandle(ctx context.Context, scope string, extraScopes ...string) (*storage.BucketHandle, error) {
 	creds, err := c.findCredentials(ctx, scope, extraScopes...)
 	if err != nil {
-		return nil, fmt.Errorf("cloud storage: unable to retrieve default token source: %v", err)
+		return nil, errors.Wrap(err, "cloud storage: unable to retrieve default token source")
 	}
 
 	client, err := storage.NewClient(ctx, option.WithTokenSource(gcp.CredentialsTokenSource(creds)))
 	if err != nil {
-		return nil, fmt.Errorf("cloud storage: unable to get client: %v", err)
+		return nil, errors.Wrap(err, "cloud storage: unable to get client")
 	}
 
 	return client.Bucket(c.bucket), nil

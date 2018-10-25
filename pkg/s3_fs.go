@@ -2,7 +2,7 @@ package storage
 
 import (
 	"context"
-	"fmt"
+	"github.com/pkg/errors"
 	"io"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -37,7 +37,7 @@ func (s *s3FS) Open(ctx context.Context, path string) (*File, error) {
 				Path: path,
 			}
 		}
-		return nil, fmt.Errorf("s3: unable to fetch object: %v", err)
+		return nil, errors.Wrap(err, "s3: unable to fetch object")
 	}
 
 	return &File{
@@ -87,7 +87,7 @@ func (s *s3FS) Walk(ctx context.Context, path string, fn WalkFn) error {
 		return last
 	})
 	if err != nil {
-		return fmt.Errorf("s3: unable to walk: %v", err)
+		return errors.Wrap(err, "s3: unable to walk")
 	}
 
 	close(errCh)
@@ -99,7 +99,7 @@ const bucketRegionHint = endpoints.UsEast1RegionID
 func (s *s3FS) bucketHandles(ctx context.Context) (*blob.Bucket, *s3.S3, error) {
 	sess, err := session.NewSession()
 	if err != nil {
-		return nil, nil, fmt.Errorf("s3: unable to create session: %v", err)
+		return nil, nil, errors.Wrap(err, "s3: unable to create session")
 	}
 
 	// https://docs.aws.amazon.com/sdk-for-go/api/service/s3/s3manager/#GetBucketRegion
@@ -107,7 +107,7 @@ func (s *s3FS) bucketHandles(ctx context.Context) (*blob.Bucket, *s3.S3, error) 
 	if len(region) == 0 {
 		region, err = s3manager.GetBucketRegion(ctx, sess, s.bucket, bucketRegionHint)
 		if err != nil {
-			return nil, nil, fmt.Errorf("s3: unable to find bucket region: %v", err)
+			return nil, nil, errors.Wrap(err, "s3: unable to find bucket region")
 		}
 	}
 
@@ -116,7 +116,7 @@ func (s *s3FS) bucketHandles(ctx context.Context) (*blob.Bucket, *s3.S3, error) 
 
 	b, err := s3blob.OpenBucket(ctx, sess, s.bucket)
 	if err != nil {
-		return nil, nil, fmt.Errorf("s3: could not open %q: %v", s.bucket, err)
+		return nil, nil, errors.Wrapf(err, "s3: could not open %q", s.bucket)
 	}
 	s3c := s3.New(sess, c)
 
