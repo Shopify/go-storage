@@ -26,13 +26,16 @@ type FS interface {
 	// File when done to release all underlying resources.
 	Open(ctx context.Context, path string) (*File, error)
 
-	// Create makes a new file in the filesystem.  Callers must close the
+	// Create makes a new file at path in the filesystem.  Callers must close the
 	// returned WriteCloser and check the error to be sure that the file
 	// was successfully written.
 	Create(ctx context.Context, path string) (io.WriteCloser, error)
 
-	// Delete removes a file from the filesystem.
+	// Delete removes a path from the filesystem.
 	Delete(ctx context.Context, path string) error
+
+	// URL resolves a path to an addressable URL
+	URL(ctx context.Context, path string, options *URLOptions) (string, error)
 }
 
 // WalkFn is a function type which is passed to Walk.
