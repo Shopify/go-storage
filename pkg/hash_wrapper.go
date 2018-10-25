@@ -34,7 +34,7 @@ type GetSetter interface {
 }
 
 // Open implements FS.
-func (hfs hashWrapper) Open(ctx context.Context, path string) (*File, error) {
+func (hfs *hashWrapper) Open(ctx context.Context, path string) (*File, error) {
 	v, err := hfs.gs.Get(path)
 	if err != nil {
 		return nil, err
@@ -43,7 +43,7 @@ func (hfs hashWrapper) Open(ctx context.Context, path string) (*File, error) {
 }
 
 // Walk implements Walker.
-func (hfs hashWrapper) Walk(ctx context.Context, path string, fn WalkFn) error {
+func (hfs *hashWrapper) Walk(ctx context.Context, path string, fn WalkFn) error {
 	return errors.New("HashFS.Walk is not implemented")
 }
 
@@ -52,7 +52,7 @@ type hashWriteCloser struct {
 	path string
 	ctx  context.Context
 
-	hfs hashWrapper
+	hfs *hashWrapper
 }
 
 func (w *hashWriteCloser) Write(b []byte) (int, error) {
@@ -87,7 +87,7 @@ func (w *hashWriteCloser) Close() (err error) {
 // TODO(trent): make sure that you document the FS.Create method
 // to Close it, and check the error. If err != nil then the file might not have
 // been written.
-func (hfs hashWrapper) Create(ctx context.Context, path string) (io.WriteCloser, error) {
+func (hfs *hashWrapper) Create(ctx context.Context, path string) (io.WriteCloser, error) {
 	return &hashWriteCloser{
 		buf:  &bytes.Buffer{},
 		path: path,
@@ -97,9 +97,14 @@ func (hfs hashWrapper) Create(ctx context.Context, path string) (io.WriteCloser,
 }
 
 // Delete implements FS.
-func (hfs hashWrapper) Delete(ctx context.Context, path string) error {
+func (hfs *hashWrapper) Delete(ctx context.Context, path string) error {
 	if err := hfs.fs.Delete(ctx, path); err != nil {
 		return err
 	}
 	return hfs.gs.Delete(path)
+}
+
+func (hfs *hashWrapper) URL(ctx context.Context, path string, options *URLOptions) (string, error) {
+	// Pass-through
+	return hfs.fs.URL(ctx, path, options)
 }

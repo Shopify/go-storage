@@ -57,3 +57,13 @@ func (l *loggerWrapper) Delete(ctx context.Context, path string) error {
 func (l *loggerWrapper) Walk(ctx context.Context, path string, fn WalkFn) error {
 	return l.fs.Walk(ctx, path, fn)
 }
+
+func (l *loggerWrapper) URL(ctx context.Context, path string, options *URLOptions) (string, error) {
+	l.logger.Printf("%v: URL: %v", l.name, path)
+	url, err := l.fs.URL(ctx, path, options)
+	if err != nil {
+		l.logger.Printf("%v: URL error: %v: %v", l.name, path, err)
+	}
+	return url, err
+
+}

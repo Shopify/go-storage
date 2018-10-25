@@ -122,3 +122,7 @@ func (s *s3FS) bucketHandles(ctx context.Context) (*blob.Bucket, *s3.S3, error) 
 
 	return b, s3c, nil
 }
+
+func (s *s3FS) URL(ctx context.Context, path string, options *URLOptions) (string, error) {
+	return "", ErrNotImplemented
+}

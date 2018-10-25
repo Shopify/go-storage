@@ -1,6 +1,11 @@
 package storage
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+)
+
+var ErrNotImplemented = errors.New("not implemented")
 
 // isNotExister is an interface used to define the behaviour of errors resulting
 // from operations which report missing files/paths.

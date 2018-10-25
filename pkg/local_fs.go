@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -92,4 +93,8 @@ func (l *localFS) Walk(_ context.Context, path string, fn WalkFn) error {
 		}
 		return nil
 	})
+}
+
+func (l *localFS) URL(ctx context.Context, path string, options *URLOptions) (string, error) {
+	return fmt.Sprintf("file://%s", l.fullPath(path)), nil
 }

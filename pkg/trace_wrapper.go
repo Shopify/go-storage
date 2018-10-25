@@ -70,3 +70,16 @@ func (t *traceWrapper) Delete(ctx context.Context, path string) (err error) {
 func (t *traceWrapper) Walk(ctx context.Context, path string, fn WalkFn) error {
 	return t.fs.Walk(ctx, path, fn)
 }
+
+func (t *traceWrapper) URL(ctx context.Context, path string, options *URLOptions) (_ string, err error) {
+	if tr, ok := trace.FromContext(ctx); ok {
+		tr.LazyPrintf("%v: url: %v", t.name, path)
+		defer func() {
+			if err != nil {
+				tr.LazyPrintf("%v: error: %v", t.name, err)
+				tr.SetError()
+			}
+		}()
+	}
+	return t.fs.URL(ctx, path, options)
+}

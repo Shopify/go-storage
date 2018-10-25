@@ -20,4 +20,9 @@ func TestFromURL(t *testing.T) {
 	assert.Implements(t, (*FS)(nil), l)
 	assert.IsType(t, (*localFS)(nil), l)
 	assert.Equal(t, "/foo/bar", string(*l.(*localFS)))
+
+	l = FromURL("file:///foo/bar")
+	assert.Implements(t, (*FS)(nil), l)
+	assert.IsType(t, (*localFS)(nil), l)
+	assert.Equal(t, "/foo/bar", string(*l.(*localFS)))
 }

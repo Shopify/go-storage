@@ -46,3 +46,7 @@ func (p *prefixWrapper) Walk(ctx context.Context, path string, fn WalkFn) error 
 		return fn(path)
 	})
 }
+
+func (p *prefixWrapper) URL(ctx context.Context, path string, options *URLOptions) (string, error) {
+	return p.fs.URL(ctx, p.addPrefix(path), options)
+}

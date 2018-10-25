@@ -10,10 +10,10 @@ import (
 
 // File contains the metadata required to define a file (for reading).
 type File struct {
-	io.ReadCloser           // Underlying data.
-	Name          string    // Name of the file (likely basename).
-	ModTime       time.Time // Modified time of the file.
-	Size          int64     // Size of the file.
+	io.ReadCloser     // Underlying data.
+	Name    string    // Name of the file (likely basename).
+	ModTime time.Time // Modified time of the file.
+	Size    int64     // Size of the file.
 }
 
 // FS is an interface which defines a virtual filesystem.
@@ -31,4 +31,13 @@ type FS interface {
 
 	// Delete removes a path from the filesystem.
 	Delete(ctx context.Context, path string) error
+
+	// URL resolves a path to an addressable URL
+	URL(ctx context.Context, path string, options *URLOptions) (string, error)
+}
+
+type URLOptions struct {
+	// Maximum time for the URL to be valid
+	// Optional.
+	Expiration time.Duration
 }

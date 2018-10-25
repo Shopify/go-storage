@@ -13,6 +13,8 @@ const (
 	StatCreateErrors = "create.errors"
 	StatDeleteTotal  = "delete.total"
 	StatDeleteErrors = "delete.errors"
+	StatURLTotal     = "url.total"
+	StatURLErrors    = "url.errors"
 )
 
 // NewStatsWrapper creates an FS which records accesses for an FS.
@@ -29,6 +31,9 @@ func NewStatsWrapper(fs FS, name string) FS {
 
 	status.Set(StatDeleteTotal, new(expvar.Int))
 	status.Set(StatDeleteErrors, new(expvar.Int))
+
+	status.Set(StatURLTotal, new(expvar.Int))
+	status.Set(StatURLErrors, new(expvar.Int))
 
 	return &statsWrapper{
 		fs:     fs,
@@ -75,4 +80,13 @@ func (s *statsWrapper) Delete(ctx context.Context, path string) error {
 // Walk implements FS.  No stats are recorded at this time.
 func (s *statsWrapper) Walk(ctx context.Context, path string, fn WalkFn) error {
 	return s.fs.Walk(ctx, path, fn)
+}
+
+func (s *statsWrapper) URL(ctx context.Context, path string, options *URLOptions) (string, error) {
+	url, err := s.fs.URL(ctx, path, options)
+	if err != nil {
+		s.status.Add(StatURLErrors, 1)
+	}
+	s.status.Add(StatURLTotal, 1)
+	return url, err
 }

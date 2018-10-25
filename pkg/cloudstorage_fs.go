@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"time"
 
 	"cloud.google.com/go/storage"
 	"github.com/google/go-cloud/blob"
@@ -14,19 +15,53 @@ import (
 	"google.golang.org/api/option"
 )
 
-func NewCloudStorageFS(bucket string) FS {
-	return &cloudStorageFS{bucket: bucket}
+const defaultCloudStorageSignedURLExpiration = 1 * time.Minute
+
+// NewCloudStorageFS creates a Google Cloud Storage FS
+// credentials can be nil to use the default GOOGLE_APPLICATION_CREDENTIALS
+func NewCloudStorageFS(bucket string, credentials *google.Credentials) FS {
+	return &cloudStorageFS{
+		bucket:      bucket,
+		credentials: credentials,
+	}
 }
 
 // cloudStorageFS implements FS and uses Google Cloud Storage as the underlying
 // file storage.
 type cloudStorageFS struct {
-	bucket string // bucket is the name of the bucket to use as the underlying storage.
+	// bucket is the name of the bucket to use as the underlying storage.
+	bucket      string
+	credentials *google.Credentials
+}
+
+func (c *cloudStorageFS) URL(ctx context.Context, path string, options *URLOptions) (string, error) {
+	creds, err := c.findCredentials(ctx, storage.ScopeReadOnly)
+	if err != nil {
+		return "", fmt.Errorf("cloud storage: unable to retrieve default token source: %v", err)
+	}
+	config, err := google.JWTConfigFromJSON(creds.JSON, storage.ScopeReadOnly)
+	if err != nil {
+		return "", fmt.Errorf("cloud storage: parse credentials: %v", err)
+	}
+
+	var expires time.Time
+	if options != nil && options.Expiration != 0 {
+		expires = time.Now().Add(options.Expiration)
+	} else {
+		expires = time.Now().Add(defaultCloudStorageSignedURLExpiration)
+	}
+
+	return storage.SignedURL(c.bucket, path, &storage.SignedURLOptions{
+		GoogleAccessID: config.Email,
+		PrivateKey:     config.PrivateKey,
+		Expires:        expires,
+		Method:         "GET",
+	})
 }
 
 // Open implements FS.
 func (c *cloudStorageFS) Open(ctx context.Context, path string) (*File, error) {
-	b, err := c.blobBucketHandle(ctx)
+	b, err := c.blobBucketHandle(ctx, storage.ScopeReadOnly)
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +86,7 @@ func (c *cloudStorageFS) Open(ctx context.Context, path string) (*File, error) {
 
 // Create implements FS.
 func (c *cloudStorageFS) Create(ctx context.Context, path string) (io.WriteCloser, error) {
-	b, err := c.blobBucketHandle(ctx)
+	b, err := c.blobBucketHandle(ctx, storage.ScopeReadWrite)
 	if err != nil {
 		return nil, err
 	}
@@ -60,7 +95,7 @@ func (c *cloudStorageFS) Create(ctx context.Context, path string) (io.WriteClose
 
 // Delete implements FS.
 func (c *cloudStorageFS) Delete(ctx context.Context, path string) error {
-	b, err := c.blobBucketHandle(ctx)
+	b, err := c.blobBucketHandle(ctx, storage.ScopeReadWrite)
 	if err != nil {
 		return err
 	}
@@ -95,25 +130,34 @@ func (c *cloudStorageFS) Walk(ctx context.Context, path string, fn WalkFn) error
 	return nil
 }
 
-func (c *cloudStorageFS) blobBucketHandle(ctx context.Context) (*blob.Bucket, error) {
-	dc, err := gcp.DefaultCredentials(ctx)
-	if err != nil {
-		return nil, err
+func (c *cloudStorageFS) findCredentials(ctx context.Context, scope string, extraScopes ...string) (*google.Credentials, error) {
+	if c.credentials != nil {
+		return c.credentials, nil
 	}
-	cl, err := gcp.NewHTTPClient(gcp.DefaultTransport(), gcp.CredentialsTokenSource(dc))
-	if err != nil {
-		return nil, err
-	}
-	return gcsblob.OpenBucket(ctx, c.bucket, cl)
+	return google.FindDefaultCredentials(ctx, append(extraScopes, scope)...)
 }
 
-func (c *cloudStorageFS) bucketHandle(ctx context.Context, scope string) (*storage.BucketHandle, error) {
-	ts, err := google.DefaultTokenSource(ctx, scope)
+func (c *cloudStorageFS) blobBucketHandle(ctx context.Context, scope string, extraScopes ...string) (*blob.Bucket, error) {
+	creds, err := c.findCredentials(ctx, scope, extraScopes...)
 	if err != nil {
 		return nil, fmt.Errorf("cloud storage: unable to retrieve default token source: %v", err)
 	}
 
-	client, err := storage.NewClient(ctx, option.WithTokenSource(ts))
+	client, err := gcp.NewHTTPClient(gcp.DefaultTransport(), gcp.CredentialsTokenSource(creds))
+	if err != nil {
+		return nil, err
+	}
+
+	return gcsblob.OpenBucket(ctx, c.bucket, client)
+}
+
+func (c *cloudStorageFS) bucketHandle(ctx context.Context, scope string, extraScopes ...string) (*storage.BucketHandle, error) {
+	creds, err := c.findCredentials(ctx, scope, extraScopes...)
+	if err != nil {
+		return nil, fmt.Errorf("cloud storage: unable to retrieve default token source: %v", err)
+	}
+
+	client, err := storage.NewClient(ctx, option.WithTokenSource(gcp.CredentialsTokenSource(creds)))
 	if err != nil {
 		return nil, fmt.Errorf("cloud storage: unable to get client: %v", err)
 	}
