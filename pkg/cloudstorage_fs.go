@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"context"
 	"fmt"
 	"io"
 
@@ -8,7 +9,6 @@ import (
 	"github.com/google/go-cloud/blob"
 	"github.com/google/go-cloud/blob/gcsblob"
 	"github.com/google/go-cloud/gcp"
-	"golang.org/x/net/context"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"

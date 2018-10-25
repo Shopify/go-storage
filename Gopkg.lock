@@ -322,7 +322,6 @@
     "github.com/google/go-cloud/blob/s3blob",
     "github.com/google/go-cloud/gcp",
     "github.com/stretchr/testify/assert",
-    "golang.org/x/net/context",
     "golang.org/x/net/trace",
     "golang.org/x/oauth2/google",
     "google.golang.org/api/iterator",

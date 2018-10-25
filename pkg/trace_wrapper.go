@@ -7,25 +7,25 @@ import (
 	"golang.org/x/net/trace"
 )
 
-// NewTraceFS creates a new FS which wraps an FS and records calls using
+// NewTraceWrapper creates a new FS which wraps an FS and records calls using
 // golang.org/x/net/trace.
-func NewTraceFS(fs FS, name string) FS {
-	return &traceFS{
+func NewTraceWrapper(fs FS, name string) FS {
+	return &traceWrapper{
 		fs:   fs,
 		name: name,
 	}
 }
 
-// traceFS is a FS implementation which wraps an FS and records
+// traceWrapper is a FS implementation which wraps an FS and records
 // calls using golang.org/x/net/trace.
-type traceFS struct {
+type traceWrapper struct {
 	fs FS
 
 	name string
 }
 
 // Open implements FS.  All calls to Open are logged via golang.org/x/net/trace.
-func (t *traceFS) Open(ctx context.Context, path string) (f *File, err error) {
+func (t *traceWrapper) Open(ctx context.Context, path string) (f *File, err error) {
 	if tr, ok := trace.FromContext(ctx); ok {
 		tr.LazyPrintf("%v: open: %v", t.name, path)
 		defer func() {
@@ -39,7 +39,7 @@ func (t *traceFS) Open(ctx context.Context, path string) (f *File, err error) {
 }
 
 // Create implements FS.  All calls to Create are logged via golang.org/x/net/trace.
-func (t *traceFS) Create(ctx context.Context, path string) (wc io.WriteCloser, err error) {
+func (t *traceWrapper) Create(ctx context.Context, path string) (wc io.WriteCloser, err error) {
 	if tr, ok := trace.FromContext(ctx); ok {
 		tr.LazyPrintf("%v: create: %v", t.name, path)
 		defer func() {
@@ -53,7 +53,7 @@ func (t *traceFS) Create(ctx context.Context, path string) (wc io.WriteCloser, e
 }
 
 // Delete implements FS.  All calls to Delete are logged via golang.org/x/net/trace.
-func (t *traceFS) Delete(ctx context.Context, path string) (err error) {
+func (t *traceWrapper) Delete(ctx context.Context, path string) (err error) {
 	if tr, ok := trace.FromContext(ctx); ok {
 		tr.LazyPrintf("%v: delete: %v", t.name, path)
 		defer func() {
@@ -67,6 +67,6 @@ func (t *traceFS) Delete(ctx context.Context, path string) (err error) {
 }
 
 // Walk implements FS.  Nothing is traced at this time.
-func (t *traceFS) Walk(ctx context.Context, path string, fn WalkFn) error {
+func (t *traceWrapper) Walk(ctx context.Context, path string, fn WalkFn) error {
 	return t.fs.Walk(ctx, path, fn)
 }

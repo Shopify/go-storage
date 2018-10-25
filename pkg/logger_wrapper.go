@@ -6,17 +6,17 @@ import (
 	"log"
 )
 
-// NewLogFS creates a new FS which logs all calls to FS.
-func NewLogFS(fs FS, name string, l *log.Logger) *LogFS {
-	return &LogFS{
+// NewLoggerWrapper creates a new FS which logs all calls to FS.
+func NewLoggerWrapper(fs FS, name string, l *log.Logger) FS {
+	return &loggerWrapper{
 		fs:     fs,
 		name:   name,
 		logger: l,
 	}
 }
 
-// LogFS is an FS implementation which logs all filesystem calls.
-type LogFS struct {
+// loggerWrapper is an FS implementation which logs all filesystem calls.
+type loggerWrapper struct {
 	fs FS
 
 	name   string
@@ -24,7 +24,7 @@ type LogFS struct {
 }
 
 // Open implements FS.  All calls to Open are logged and errors are logged separately.
-func (l *LogFS) Open(ctx context.Context, path string) (*File, error) {
+func (l *loggerWrapper) Open(ctx context.Context, path string) (*File, error) {
 	l.logger.Printf("%v: open: %v", l.name, path)
 	f, err := l.fs.Open(ctx, path)
 	if err != nil {
@@ -34,7 +34,7 @@ func (l *LogFS) Open(ctx context.Context, path string) (*File, error) {
 }
 
 // Create implements FS.  All calls to Create are logged and errors are logged separately.
-func (l *LogFS) Create(ctx context.Context, path string) (io.WriteCloser, error) {
+func (l *loggerWrapper) Create(ctx context.Context, path string) (io.WriteCloser, error) {
 	l.logger.Printf("%v: create: %v", l.name, path)
 	wc, err := l.fs.Create(ctx, path)
 	if err != nil {
@@ -44,7 +44,7 @@ func (l *LogFS) Create(ctx context.Context, path string) (io.WriteCloser, error)
 }
 
 // Delete implements FS.  All calls to Delete are logged and errors are logged separately.
-func (l *LogFS) Delete(ctx context.Context, path string) error {
+func (l *loggerWrapper) Delete(ctx context.Context, path string) error {
 	l.logger.Printf("%v: delete: %v", l.name, path)
 	err := l.fs.Delete(ctx, path)
 	if err != nil {
@@ -54,6 +54,6 @@ func (l *LogFS) Delete(ctx context.Context, path string) error {
 }
 
 // Walk implements FS.  No logs are written at this time.
-func (l *LogFS) Walk(ctx context.Context, path string, fn WalkFn) error {
+func (l *loggerWrapper) Walk(ctx context.Context, path string, fn WalkFn) error {
 	return l.fs.Walk(ctx, path, fn)
 }

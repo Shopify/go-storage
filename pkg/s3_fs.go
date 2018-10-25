@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"context"
 	"fmt"
 	"io"
 
@@ -11,16 +12,15 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/google/go-cloud/blob"
 	"github.com/google/go-cloud/blob/s3blob"
-	"golang.org/x/net/context"
 )
+
+func NewS3FS(bucket string) FS {
+	return &s3FS{bucket: bucket}
+}
 
 // s3FS is an implementation of FS which uses AWS s3FS as the underlying storage layer.
 type s3FS struct {
 	bucket string // bucket is the name of the bucket to use as the underlying storage.
-}
-
-func NewS3FS(bucket string) FS {
-	return &s3FS{bucket: bucket}
 }
 
 // Open implements FS.

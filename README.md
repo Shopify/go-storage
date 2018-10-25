@@ -126,7 +126,7 @@ To use Cloud Storage as a source file system, but cache all opened files in a lo
 src := storage.NewCloudStorageFS("some-bucket")
 local := storage.NewLocalFS("/scratch-space")
 
-fs := storage.NewCacheFS(src, local)
+fs := storage.NewCacheWrapper(src, local)
 f, err := fs.Open(context.Background(), "file.json") // will try src then jump to cache ("gs://some-bucket/file.json")
 if err != nil {
 	// ...
@@ -146,7 +146,7 @@ This is particularly useful when distributing files across multiple regions or b
 
 ```go
 mainSrc := storage.NewCloudStorage("some-bucket-in-another-region")
-fs2 := storage.Cache(mainSrc, fs) // fs is from previous snippet
+fs2 := storage.NewCacheWrapper(mainSrc, fs) // fs is from previous snippet
 
 // Open will:
 // 1. Try local (see above)
@@ -173,7 +173,7 @@ f.Close()
 If you're writing code that relies on a set directory structure, it can be very messy to have to pass path-patterns around.  You can avoid this by wrapping `storage.FS` implementations with `storage.Prefix` that rewrites all incoming paths.
 
 ```go
-modelFS := storage.NewPrefixFS(rootFS, "models/")
+modelFS := storage.NewPrefixWrapper(rootFS, "models/")
 f, err := modelFS.Open(context.Background(), "file.json") // will call rootFS.Open with path "models/file.json"
 if err != nil {
 	// ...
@@ -186,7 +186,7 @@ It's also now simple to write wrapper functions to abstract out more complex dir
 
 ```go
 func NewUserFS(fs storage.FS, userID, mediaType string) FS {
-	return storage.Prefix(fs, fmt.Sprintf("%v/%v", userID, userType))
+	return storage.NewPrefixWrapper(fs, fmt.Sprintf("%v/%v", userID, userType))
 }
 
 userFS := NewUserFS(rootFS, "1111", "pics")

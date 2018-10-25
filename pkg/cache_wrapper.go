@@ -5,20 +5,21 @@ import (
 	"io"
 )
 
-// NewCacheFS creates an FS implementation which caches files opened from src into cache.
-func NewCacheFS(src, cache FS) FS {
-	return &cacheFS{
+// NewCacheWrapper creates an FS implementation which caches files opened from src into cache.
+func NewCacheWrapper(src, cache FS) FS {
+	return &cacheWrapper{
 		src:   src,
 		cache: cache,
 	}
 }
 
-type cacheFS struct {
-	src, cache FS
+type cacheWrapper struct {
+	src   FS
+	cache FS
 }
 
 // Open implements FS.
-func (c *cacheFS) Open(ctx context.Context, path string) (*File, error) {
+func (c *cacheWrapper) Open(ctx context.Context, path string) (*File, error) {
 	f, err := c.cache.Open(ctx, path)
 	if err == nil {
 		return f, nil
@@ -56,7 +57,7 @@ func (c *cacheFS) Open(ctx context.Context, path string) (*File, error) {
 }
 
 // Delete implements FS.
-func (c *cacheFS) Delete(ctx context.Context, path string) error {
+func (c *cacheWrapper) Delete(ctx context.Context, path string) error {
 	err := c.cache.Delete(ctx, path)
 	if err != nil && !IsNotExist(err) {
 		return err
@@ -65,7 +66,7 @@ func (c *cacheFS) Delete(ctx context.Context, path string) error {
 }
 
 // Create implements FS.
-func (c *cacheFS) Create(ctx context.Context, path string) (io.WriteCloser, error) {
+func (c *cacheWrapper) Create(ctx context.Context, path string) (io.WriteCloser, error) {
 	err := c.cache.Delete(ctx, path)
 	if err != nil && !IsNotExist(err) {
 		return nil, err
@@ -74,6 +75,6 @@ func (c *cacheFS) Create(ctx context.Context, path string) (io.WriteCloser, erro
 }
 
 // Walk implements FS.
-func (c *cacheFS) Walk(ctx context.Context, path string, fn WalkFn) error {
+func (c *cacheWrapper) Walk(ctx context.Context, path string, fn WalkFn) error {
 	return c.src.Walk(ctx, path, fn)
 }

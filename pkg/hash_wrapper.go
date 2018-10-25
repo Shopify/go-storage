@@ -9,17 +9,17 @@ import (
 	"io"
 )
 
-// NewHashFS creates a content addressable filesystem using hash.Hash
+// NewHashWrapper creates a content addressable filesystem using hash.Hash
 // to sum the content and store it using that name.
-func NewHashFS(h hash.Hash, fs FS, gs GetSetter) FS {
-	return &hashFS{
+func NewHashWrapper(h hash.Hash, fs FS, gs GetSetter) FS {
+	return &hashWrapper{
 		h:  h,
 		fs: fs,
 		gs: gs,
 	}
 }
 
-type hashFS struct {
+type hashWrapper struct {
 	h  hash.Hash
 	fs FS
 	gs GetSetter
@@ -34,7 +34,7 @@ type GetSetter interface {
 }
 
 // Open implements FS.
-func (hfs hashFS) Open(ctx context.Context, path string) (*File, error) {
+func (hfs hashWrapper) Open(ctx context.Context, path string) (*File, error) {
 	v, err := hfs.gs.Get(path)
 	if err != nil {
 		return nil, err
@@ -43,7 +43,7 @@ func (hfs hashFS) Open(ctx context.Context, path string) (*File, error) {
 }
 
 // Walk implements Walker.
-func (hfs hashFS) Walk(ctx context.Context, path string, fn WalkFn) error {
+func (hfs hashWrapper) Walk(ctx context.Context, path string, fn WalkFn) error {
 	return errors.New("HashFS.Walk is not implemented")
 }
 
@@ -52,7 +52,7 @@ type hashWriteCloser struct {
 	path string
 	ctx  context.Context
 
-	hfs hashFS
+	hfs hashWrapper
 }
 
 func (w *hashWriteCloser) Write(b []byte) (int, error) {
@@ -87,7 +87,7 @@ func (w *hashWriteCloser) Close() (err error) {
 // TODO(trent): make sure that you document the FS.Create method
 // to Close it, and check the error. If err != nil then the file might not have
 // been written.
-func (hfs hashFS) Create(ctx context.Context, path string) (io.WriteCloser, error) {
+func (hfs hashWrapper) Create(ctx context.Context, path string) (io.WriteCloser, error) {
 	return &hashWriteCloser{
 		buf:  &bytes.Buffer{},
 		path: path,
@@ -97,7 +97,7 @@ func (hfs hashFS) Create(ctx context.Context, path string) (io.WriteCloser, erro
 }
 
 // Delete implements FS.
-func (hfs hashFS) Delete(ctx context.Context, path string) error {
+func (hfs hashWrapper) Delete(ctx context.Context, path string) error {
 	if err := hfs.fs.Delete(ctx, path); err != nil {
 		return err
 	}

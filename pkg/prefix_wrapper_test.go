@@ -10,7 +10,7 @@ const prefix = "testPrefix/"
 
 func withPrefix(cb func(fs storage.FS, src storage.FS)) {
 	src := storage.NewMemoryFS()
-	fs := storage.NewPrefixFS(src, prefix)
+	fs := storage.NewPrefixWrapper(src, prefix)
 	cb(fs, src)
 }
 

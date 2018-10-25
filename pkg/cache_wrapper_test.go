@@ -9,7 +9,7 @@ import (
 func withCache(cb func(fs storage.FS, src storage.FS, cache storage.FS)) {
 	withLocal(func(local storage.FS) {
 		withMem(func(mem storage.FS) {
-			fs := storage.NewCacheFS(local, mem)
+			fs := storage.NewCacheWrapper(local, mem)
 			cb(fs, local, mem)
 		})
 	})
