@@ -71,7 +71,7 @@ func (t *traceWrapper) Walk(ctx context.Context, path string, fn WalkFn) error {
 	return t.fs.Walk(ctx, path, fn)
 }
 
-func (t *traceWrapper) URL(ctx context.Context, path string, options *URLOptions) (_ string, err error) {
+func (t *traceWrapper) URL(ctx context.Context, path string, options *SignedURLOptions) (_ string, err error) {
 	if tr, ok := trace.FromContext(ctx); ok {
 		tr.LazyPrintf("%v: url: %v", t.name, path)
 		defer func() {

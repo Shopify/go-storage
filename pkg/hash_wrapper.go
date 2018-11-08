@@ -104,7 +104,7 @@ func (hfs *hashWrapper) Delete(ctx context.Context, path string) error {
 	return hfs.gs.Delete(path)
 }
 
-func (hfs *hashWrapper) URL(ctx context.Context, path string, options *URLOptions) (string, error) {
+func (hfs *hashWrapper) URL(ctx context.Context, path string, options *SignedURLOptions) (string, error) {
 	// Pass-through
 	return hfs.fs.URL(ctx, path, options)
 }

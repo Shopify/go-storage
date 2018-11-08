@@ -5,12 +5,13 @@ import (
 	"crypto/rand"
 	"crypto/sha1"
 	"fmt"
-	"github.com/Shopify/go-storage/pkg"
-	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"testing"
+
+	"github.com/Shopify/go-storage/pkg"
+	"github.com/stretchr/testify/assert"
 )
 
 func Test_cloudStorageFS_URL(t *testing.T) {
@@ -59,7 +60,7 @@ func Test_cloudStorageFS_Delete(t *testing.T) {
 	})
 }
 
-func withCloudStorageFS(t *testing.T, cb func (fs storage.FS)) {
+func withCloudStorageFS(t *testing.T, cb func(fs storage.FS)) {
 	if os.Getenv("GOOGLE_APPLICATION_CREDENTIALS") == "" {
 		t.Skip("skipping cloud storage tests, GOOGLE_APPLICATION_CREDENTIALS is empty")
 	}

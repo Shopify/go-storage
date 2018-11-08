@@ -110,6 +110,6 @@ func (m *memoryFS) Walk(_ context.Context, path string, fn WalkFn) error {
 	return nil
 }
 
-func (m *memoryFS) URL(ctx context.Context, path string, options *URLOptions) (string, error) {
+func (m *memoryFS) URL(ctx context.Context, path string, options *SignedURLOptions) (string, error) {
 	return "", ErrNotImplemented
 }

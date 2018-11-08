@@ -82,7 +82,7 @@ func (s *statsWrapper) Walk(ctx context.Context, path string, fn WalkFn) error {
 	return s.fs.Walk(ctx, path, fn)
 }
 
-func (s *statsWrapper) URL(ctx context.Context, path string, options *URLOptions) (string, error) {
+func (s *statsWrapper) URL(ctx context.Context, path string, options *SignedURLOptions) (string, error) {
 	url, err := s.fs.URL(ctx, path, options)
 	if err != nil {
 		s.status.Add(StatURLErrors, 1)

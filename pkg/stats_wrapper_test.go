@@ -4,9 +4,10 @@ import (
 	"crypto/sha1"
 	"expvar"
 	"fmt"
+	"testing"
+
 	"github.com/Shopify/go-storage/pkg"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestNewStatsWrapper(t *testing.T) {

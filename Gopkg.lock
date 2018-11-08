@@ -18,7 +18,7 @@
   version = "v0.30.0"
 
 [[projects]]
-  digest = "1:01fa9b73d0701afa94f45f03191b7c4f12b7445f036dc4c64afc0c1a5961f1ca"
+  digest = "1:44b53efa67edb98a10879bbdad2516d9c801831488296b3063aad8095f16b072"
   name = "github.com/aws/aws-sdk-go"
   packages = [
     "aws",
@@ -38,6 +38,7 @@
     "aws/request",
     "aws/session",
     "aws/signer/v4",
+    "internal/ini",
     "internal/s3err",
     "internal/sdkio",
     "internal/sdkrand",
@@ -57,8 +58,8 @@
     "service/sts",
   ]
   pruneopts = "UT"
-  revision = "2324d8a7db41970a80d19791bd30b94f632ce0cc"
-  version = "v1.15.58"
+  revision = "8cb75b60636a37baea457bc6d900b49d663e309c"
+  version = "v1.15.71"
 
 [[projects]]
   digest = "1:ffe9824d294da03b391f44e1ae8281281b4afc1bdaa9588c9097785e3af10cec"
@@ -67,14 +68,6 @@
   pruneopts = "UT"
   revision = "8991bc29aa16c548c550c7ff78260e27b9ab7c73"
   version = "v1.1.1"
-
-[[projects]]
-  digest = "1:15e27372d379b45b18ac917b9dafc45c45485239490ece18cca97a12f9591146"
-  name = "github.com/go-ini/ini"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "9c8236e659b76e87bf02044d06fde8683008ff3e"
-  version = "v1.39.0"
 
 [[projects]]
   digest = "1:5d1b5a25486fc7d4e133646d834f6fca7ba1cef9903d40e7aa786c41b89e9e91"
@@ -92,7 +85,7 @@
   version = "v1.2.0"
 
 [[projects]]
-  digest = "1:8fcc9191dba2679567e5ffed3abe071b044596470543fbfcc451247d51ef407e"
+  digest = "1:d094f8c02eb7e50c32f20c207f08e59d5814bbd3a0e7238439359374f59c37ba"
   name = "github.com/google/go-cloud"
   packages = [
     "blob",
@@ -103,8 +96,8 @@
     "wire",
   ]
   pruneopts = "UT"
-  revision = "573424055b8e657474e034cdb3a8d5f9210010b7"
-  version = "v0.4.0"
+  revision = "2152f209f3c907645f7ebdcacdb2c18cd89e6fa8"
+  version = "0.5.0"
 
 [[projects]]
   digest = "1:e145e9710a10bc114a6d3e2738aadf8de146adaa031854ffdf7bbfe15da85e63"
@@ -146,10 +139,11 @@
   version = "v1.2.2"
 
 [[projects]]
-  digest = "1:ac5cb21cbe4f095b6e5f1ae5102a85dfd598d39b5ad0d64df3d41ee046586f30"
+  digest = "1:3b5a3bc35810830ded5e26ef9516e933083a2380d8e57371fdfde3c70d7c6952"
   name = "go.opencensus.io"
   packages = [
     ".",
+    "exemplar",
     "internal",
     "internal/tagencoding",
     "plugin/ochttp",
@@ -164,12 +158,12 @@
     "trace/tracestate",
   ]
   pruneopts = "UT"
-  revision = "79993219becaa7e29e3b60cb67f5b8e82dee11d6"
-  version = "v0.17.0"
+  revision = "b7bf3cdb64150a8c8c53b769fdeb2ba581bd4d4b"
+  version = "v0.18.0"
 
 [[projects]]
   branch = "master"
-  digest = "1:1ae047ded1ddcbe0eca8b0772e3ff2c10e354db4c42c65b96d0386883e63904d"
+  digest = "1:cb50171ec1782317a86709fce896e4f564a35ceece954561288afa5948cf5856"
   name = "golang.org/x/net"
   packages = [
     "context",
@@ -182,11 +176,11 @@
     "trace",
   ]
   pruneopts = "UT"
-  revision = "04a2e542c03f1d053ab3e4d6e5abcd4b66e2be8e"
+  revision = "a544f70c90f196e50d198126db0c4cb2b562fec0"
 
 [[projects]]
   branch = "master"
-  digest = "1:faa25cb78cf9c8cec9345d4ed07322cdef6a8c968b3d0a6b6c3609067c7386eb"
+  digest = "1:d71cf3891adad6f2d608396a8da36e90ac46cd51e34d5a75a31385d2682b43ce"
   name = "golang.org/x/oauth2"
   packages = [
     ".",
@@ -196,15 +190,15 @@
     "jwt",
   ]
   pruneopts = "UT"
-  revision = "9dcd33a902f40452422c2367fefcb95b54f9f8f8"
+  revision = "f42d05182288abf10faef86d16c0d07b8d40ea2d"
 
 [[projects]]
   branch = "master"
-  digest = "1:be4f165c438aa39318fd5c8c180a95f4a52524641c0b714638b0fd9fd912b38d"
+  digest = "1:7ba061af4131fb44b30448572acd0d6fefbf63a61b97b7ef1dea0be5871c2742"
   name = "golang.org/x/sys"
   packages = ["unix"]
   pruneopts = "UT"
-  revision = "8e24a49d80f82323e1c4db1b5da3e0f31171a151"
+  revision = "66b7b1311ac80bbafcd2daeef9a5e6e2cd1e2399"
 
 [[projects]]
   digest = "1:a2ab62866c75542dd18d2b069fec854577a20211d7c0ea6ae746072a1dccdd18"
@@ -231,7 +225,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:c989c4ef24917bb6a05916a3cebf7c676115d92ed66f87928ee4b8f3ad88e628"
+  digest = "1:a3d476eb2fd6fb31991459816fe73242b42bf811b0b25d143f06366b87c238b7"
   name = "google.golang.org/api"
   packages = [
     "gensupport",
@@ -246,10 +240,10 @@
     "transport/http/internal/propagation",
   ]
   pruneopts = "UT"
-  revision = "7fb5a8353b60cae0caa99dd43cd047af9ed6476c"
+  revision = "c75846e6b94d2eded794529e4016d3d19ae6eeb1"
 
 [[projects]]
-  digest = "1:193950893ea275f89ed92e5da11ed8fa1436872f755a9ea5d4afa83dc9d9c3a8"
+  digest = "1:d2a8db567a76203e3b41c1f632d86485ffd57f8e650a0d1b19d240671c2fddd7"
   name = "google.golang.org/appengine"
   packages = [
     ".",
@@ -264,12 +258,12 @@
     "urlfetch",
   ]
   pruneopts = "UT"
-  revision = "ae0ab99deb4dc413a2b4bd6c8bdd0eb67f1e4d06"
-  version = "v1.2.0"
+  revision = "4a4468ece617fc8205e99368fa2200e9d1fad421"
+  version = "v1.3.0"
 
 [[projects]]
   branch = "master"
-  digest = "1:a58c1a53a58f69e1b9396b18b2a9cf7dd591a12d0a8f6a57322a7a6571a4c610"
+  digest = "1:1ba78ad987af2d56273afa3221ed3a798d918b711a8354120eafac022b87ce3b"
   name = "google.golang.org/genproto"
   packages = [
     "googleapis/api/annotations",
@@ -278,10 +272,10 @@
     "googleapis/rpc/status",
   ]
   pruneopts = "UT"
-  revision = "94acd270e44e65579b9ee3cdab25034d33fed608"
+  revision = "5fc9ac5403620be16bcdb0c8e7644b1178472c3b"
 
 [[projects]]
-  digest = "1:ab8e92d746fb5c4c18846b0879842ac8e53b3d352449423d0924a11f1020ae1b"
+  digest = "1:c3ad9841823db6da420a5625b367913b4ff54bbe60e8e3c98bd20e243e62e2d2"
   name = "google.golang.org/grpc"
   packages = [
     ".",
@@ -312,18 +306,16 @@
     "tap",
   ]
   pruneopts = "UT"
-  revision = "8dea3dc473e90c8179e519d91302d0597c0ca1d1"
-  version = "v1.15.0"
+  revision = "2e463a05d100327ca47ac218281906921038fd95"
+  version = "v1.16.0"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
-    "cloud.google.com/go/storage",
     "github.com/aws/aws-sdk-go/aws",
     "github.com/aws/aws-sdk-go/aws/endpoints",
     "github.com/aws/aws-sdk-go/aws/session",
-    "github.com/aws/aws-sdk-go/service/s3",
     "github.com/aws/aws-sdk-go/service/s3/s3manager",
     "github.com/google/go-cloud/blob",
     "github.com/google/go-cloud/blob/gcsblob",
@@ -334,7 +326,7 @@
     "golang.org/x/net/trace",
     "golang.org/x/oauth2/google",
     "google.golang.org/api/iterator",
-    "google.golang.org/api/option",
+    "google.golang.org/api/storage/v1",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1

@@ -95,6 +95,6 @@ func (l *localFS) Walk(_ context.Context, path string, fn WalkFn) error {
 	})
 }
 
-func (l *localFS) URL(ctx context.Context, path string, options *URLOptions) (string, error) {
+func (l *localFS) URL(ctx context.Context, path string, options *SignedURLOptions) (string, error) {
 	return fmt.Sprintf("file://%s", l.fullPath(path)), nil
 }

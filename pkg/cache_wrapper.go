@@ -79,7 +79,7 @@ func (c *cacheWrapper) Walk(ctx context.Context, path string, fn WalkFn) error {
 	return c.src.Walk(ctx, path, fn)
 }
 
-func (c *cacheWrapper) URL(ctx context.Context, path string, options *URLOptions) (string, error) {
+func (c *cacheWrapper) URL(ctx context.Context, path string, options *SignedURLOptions) (string, error) {
 	// Pass-through
 	return c.src.URL(ctx, path, options)
 }

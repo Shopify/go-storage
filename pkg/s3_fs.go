@@ -2,16 +2,15 @@ package storage
 
 import (
 	"context"
-	"github.com/pkg/errors"
 	"io"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/endpoints"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/google/go-cloud/blob"
 	"github.com/google/go-cloud/blob/s3blob"
+	"github.com/pkg/errors"
 )
 
 func NewS3FS(bucket string) FS {
@@ -25,7 +24,7 @@ type s3FS struct {
 
 // Open implements FS.
 func (s *s3FS) Open(ctx context.Context, path string) (*File, error) {
-	b, _, err := s.bucketHandles(ctx)
+	b, err := s.bucketHandles(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +49,7 @@ func (s *s3FS) Open(ctx context.Context, path string) (*File, error) {
 
 // Create implements FS.
 func (s *s3FS) Create(ctx context.Context, path string) (io.WriteCloser, error) {
-	b, _, err := s.bucketHandles(ctx)
+	b, err := s.bucketHandles(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -59,7 +58,7 @@ func (s *s3FS) Create(ctx context.Context, path string) (io.WriteCloser, error) 
 
 // Delete implements FS.
 func (s *s3FS) Delete(ctx context.Context, path string) error {
-	b, _, err := s.bucketHandles(ctx)
+	b, err := s.bucketHandles(ctx)
 	if err != nil {
 		return err
 	}
@@ -68,38 +67,41 @@ func (s *s3FS) Delete(ctx context.Context, path string) error {
 
 // Walk implements FS.
 func (s *s3FS) Walk(ctx context.Context, path string, fn WalkFn) error {
-	_, s3c, err := s.bucketHandles(ctx)
+	bh, err := s.bucketHandles(ctx)
 	if err != nil {
 		return err
 	}
 
-	errCh := make(chan error, 1)
-	err = s3c.ListObjectsPagesWithContext(ctx, &s3.ListObjectsInput{
-		Bucket: aws.String(s.bucket),
-		Prefix: aws.String(path),
-	}, func(page *s3.ListObjectsOutput, last bool) bool {
-		for _, obj := range page.Contents {
-			if err := fn(*obj.Key); err != nil {
-				errCh <- err
-				return false
-			}
-		}
-		return last
+	it, err := bh.List(ctx, &blob.ListOptions{
+		Prefix: path,
 	})
 	if err != nil {
-		return errors.Wrap(err, "s3: unable to walk")
+		return err
 	}
 
-	close(errCh)
-	return <-errCh
+	for {
+		r, err := it.Next(ctx)
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			// TODO(dhowden): Properly handle this error.
+			return err
+		}
+
+		if err = fn(r.Key); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 const bucketRegionHint = endpoints.UsEast1RegionID
 
-func (s *s3FS) bucketHandles(ctx context.Context) (*blob.Bucket, *s3.S3, error) {
+func (s *s3FS) bucketHandles(ctx context.Context) (*blob.Bucket, error) {
 	sess, err := session.NewSession()
 	if err != nil {
-		return nil, nil, errors.Wrap(err, "s3: unable to create session")
+		return nil, errors.Wrap(err, "s3: unable to create session")
 	}
 
 	// https://docs.aws.amazon.com/sdk-for-go/api/service/s3/s3manager/#GetBucketRegion
@@ -107,22 +109,21 @@ func (s *s3FS) bucketHandles(ctx context.Context) (*blob.Bucket, *s3.S3, error) 
 	if len(region) == 0 {
 		region, err = s3manager.GetBucketRegion(ctx, sess, s.bucket, bucketRegionHint)
 		if err != nil {
-			return nil, nil, errors.Wrap(err, "s3: unable to find bucket region")
+			return nil, errors.Wrap(err, "s3: unable to find bucket region")
 		}
 	}
 
 	c := aws.NewConfig().WithRegion(region)
 	sess = sess.Copy(c)
 
-	b, err := s3blob.OpenBucket(ctx, sess, s.bucket)
+	b, err := s3blob.OpenBucket(ctx, s.bucket, sess, nil)
 	if err != nil {
-		return nil, nil, errors.Wrapf(err, "s3: could not open %q", s.bucket)
+		return nil, errors.Wrapf(err, "s3: could not open %q", s.bucket)
 	}
-	s3c := s3.New(sess, c)
 
-	return b, s3c, nil
+	return b, nil
 }
 
-func (s *s3FS) URL(ctx context.Context, path string, options *URLOptions) (string, error) {
+func (s *s3FS) URL(ctx context.Context, path string, options *SignedURLOptions) (string, error) {
 	return "", ErrNotImplemented
 }

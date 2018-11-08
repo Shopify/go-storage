@@ -58,7 +58,7 @@ func (l *loggerWrapper) Walk(ctx context.Context, path string, fn WalkFn) error 
 	return l.fs.Walk(ctx, path, fn)
 }
 
-func (l *loggerWrapper) URL(ctx context.Context, path string, options *URLOptions) (string, error) {
+func (l *loggerWrapper) URL(ctx context.Context, path string, options *SignedURLOptions) (string, error) {
 	l.logger.Printf("%v: URL: %v", l.name, path)
 	url, err := l.fs.URL(ctx, path, options)
 	if err != nil {
