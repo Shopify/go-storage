@@ -96,5 +96,11 @@ func (l *localFS) Walk(_ context.Context, path string, fn WalkFn) error {
 }
 
 func (l *localFS) URL(ctx context.Context, path string, options *SignedURLOptions) (string, error) {
+	path = l.fullPath(path)
+	_, err := os.Stat(path)
+	if err != nil {
+		return "", l.wrapError(path, err)
+	}
+
 	return fmt.Sprintf("file://%s", l.fullPath(path)), nil
 }
