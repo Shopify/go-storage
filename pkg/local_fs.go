@@ -102,5 +102,5 @@ func (l *localFS) URL(ctx context.Context, path string, options *SignedURLOption
 		return "", l.wrapError(path, err)
 	}
 
-	return fmt.Sprintf("file://%s", l.fullPath(path)), nil
+	return fmt.Sprintf("file://%s", path), nil
 }
