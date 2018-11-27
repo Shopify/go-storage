@@ -3,37 +3,81 @@ package storage
 import (
 	"context"
 	"io"
+	"time"
 )
 
+type CacheOptions struct {
+	// MaxAge is the maximum time allowed since the underlying File's ModTime
+	// This means that if the cache is older than MaxAge, the Cache will fetch from the src again.
+	// If the expired File is still present on the src (i.e. not updated), it will be ignored.
+	MaxAge time.Duration
+
+	// DefaultExpired makes the cache treat a File as expired if its ModTime cannot be checked.
+	// By default, it is false, which means the cache will treat zero-ModTime files as valid.
+	// Only useful if MaxAge is set.
+	DefaultExpired bool
+}
+
 // NewCacheWrapper creates an FS implementation which caches files opened from src into cache.
-func NewCacheWrapper(src, cache FS) FS {
+func NewCacheWrapper(src, cache FS, options *CacheOptions) FS {
+	if options == nil {
+		options = &CacheOptions{}
+	}
+
 	return &cacheWrapper{
-		src:   src,
-		cache: cache,
+		src:     src,
+		cache:   cache,
+		options: options,
 	}
 }
 
 type cacheWrapper struct {
-	src   FS
-	cache FS
+	src     FS
+	cache   FS
+	options *CacheOptions
+}
+
+func (c *cacheWrapper) isExpired(file *File) bool {
+	if c.options.MaxAge == 0 {
+		// No expiration behavior
+		return false
+	}
+
+	if file.ModTime.IsZero() {
+		// Unable to check the File's ModTime
+		return c.options.DefaultExpired
+	}
+
+	return time.Since(file.ModTime) > c.options.MaxAge
 }
 
 // Open implements FS.
 func (c *cacheWrapper) Open(ctx context.Context, path string) (*File, error) {
 	f, err := c.cache.Open(ctx, path)
 	if err == nil {
-		return f, nil
+		if c.isExpired(f) {
+			err = &expiredError{Path: path}
+		} else {
+			return f, nil
+		}
 	}
 
 	if !IsNotExist(err) {
 		return nil, err
 	}
 
-	sf, err1 := c.src.Open(ctx, path)
-	if err1 != nil {
-		return nil, err1
+	sf, err := c.src.Open(ctx, path)
+	if err != nil {
+		return nil, err
 	}
 	defer sf.Close()
+
+	if c.isExpired(sf) {
+		// Cleanup expire entry, but don't care for deletion errors
+		c.cache.Delete(ctx, path)
+
+		return nil, &expiredError{Path: path}
+	}
 
 	wc, err := c.cache.Create(ctx, path)
 	if err != nil {
