@@ -42,6 +42,15 @@ func (hfs *hashWrapper) Open(ctx context.Context, path string, options *ReaderOp
 	return hfs.fs.Open(ctx, v, options)
 }
 
+// Attributes implements FS.
+func (hfs *hashWrapper) Attributes(ctx context.Context, path string, options *ReaderOptions) (*Attributes, error) {
+	v, err := hfs.gs.Get(path)
+	if err != nil {
+		return nil, err
+	}
+	return hfs.fs.Attributes(ctx, v, options)
+}
+
 // Walk implements Walker.
 func (hfs *hashWrapper) Walk(ctx context.Context, path string, fn WalkFn) error {
 	return errors.New("HashFS.Walk is not implemented")

@@ -71,6 +71,26 @@ func (c *cloudStorageFS) Open(ctx context.Context, path string, options *ReaderO
 	}, nil
 }
 
+// Attributes implements FS.
+func (c *cloudStorageFS) Attributes(ctx context.Context, path string, options *ReaderOptions) (*Attributes, error) {
+	b, err := c.blobBucketHandle(ctx, storage.DevstorageReadOnlyScope)
+	if err != nil {
+		return nil, err
+	}
+
+	a, err := b.Attributes(ctx, path)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Attributes{
+		ContentType: a.ContentType,
+		Metadata:    a.Metadata,
+		ModTime:     a.ModTime,
+		Size:        a.Size,
+	}, nil
+}
+
 // Create implements FS.
 func (c *cloudStorageFS) Create(ctx context.Context, path string, options *WriterOptions) (io.WriteCloser, error) {
 	b, err := c.blobBucketHandle(ctx, storage.DevstorageReadWriteScope)

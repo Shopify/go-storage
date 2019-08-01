@@ -9,6 +9,8 @@ import (
 const (
 	StatOpenTotal    = "open.total"
 	StatOpenErrors   = "open.errors"
+	StatAttrsTotal   = "attrs.total"
+	StatAttrsErrors  = "attrs.errors"
 	StatCreateTotal  = "create.total"
 	StatCreateErrors = "create.errors"
 	StatDeleteTotal  = "delete.total"
@@ -25,6 +27,9 @@ func NewStatsWrapper(fs FS, name string) FS {
 	status := expvar.NewMap(name)
 	status.Set(StatOpenTotal, new(expvar.Int))
 	status.Set(StatOpenErrors, new(expvar.Int))
+
+	status.Set(StatAttrsTotal, new(expvar.Int))
+	status.Set(StatAttrsErrors, new(expvar.Int))
 
 	status.Set(StatCreateTotal, new(expvar.Int))
 	status.Set(StatCreateErrors, new(expvar.Int))
@@ -55,6 +60,16 @@ func (s *statsWrapper) Open(ctx context.Context, path string, options *ReaderOpt
 	}
 	s.status.Add(StatOpenTotal, 1)
 	return f, err
+}
+
+// Attributes implements FS.  All errors from Attributes are counted.
+func (s *statsWrapper) Attributes(ctx context.Context, path string, options *ReaderOptions) (*Attributes, error) {
+	a, err := s.fs.Attributes(ctx, path, options)
+	if err != nil {
+		s.status.Add(StatAttrsErrors, 1)
+	}
+	s.status.Add(StatAttrsTotal, 1)
+	return a, err
 }
 
 // Create implements FS.  All errors from Create are counted.

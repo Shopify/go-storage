@@ -103,6 +103,15 @@ func (c *cacheWrapper) Open(ctx context.Context, path string, options *ReaderOpt
 	return ff, nil
 }
 
+// Attributes implements FS.
+func (c *cacheWrapper) Attributes(ctx context.Context, path string, options *ReaderOptions) (*Attributes, error) {
+	f, err := c.Open(ctx, path, options)
+	if err != nil {
+		return nil, err
+	}
+	return &f.Attributes, nil
+}
+
 // Delete implements FS.
 func (c *cacheWrapper) Delete(ctx context.Context, path string) error {
 	err := c.cache.Delete(ctx, path)

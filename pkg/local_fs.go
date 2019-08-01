@@ -60,6 +60,21 @@ func (l *localFS) Open(_ context.Context, path string, options *ReaderOptions) (
 	}, nil
 }
 
+// Attributes implements FS.
+func (l *localFS) Attributes(ctx context.Context, path string, options *ReaderOptions) (*Attributes, error) {
+	path = l.fullPath(path)
+
+	stat, err := os.Stat(path)
+	if err != nil {
+		return nil, l.wrapError(path, err)
+	}
+
+	return &Attributes{
+		ModTime: stat.ModTime(),
+		Size:    stat.Size(),
+	}, nil
+}
+
 // Create implements FS.  If the path contains any directories which do not already exist
 // then Create will try to make them, returning an error if it fails.
 func (l *localFS) Create(_ context.Context, path string, options *WriterOptions) (io.WriteCloser, error) {

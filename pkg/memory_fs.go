@@ -49,6 +49,21 @@ func (m *memoryFS) Open(_ context.Context, path string, options *ReaderOptions) 
 	}
 }
 
+// Attributes implements FS.
+func (m *memoryFS) Attributes(ctx context.Context, path string, options *ReaderOptions) (*Attributes, error) {
+	m.RLock()
+	f, ok := m.data[path]
+	m.RUnlock()
+
+	if ok {
+		attrs := f.attrs
+		return &attrs, nil
+	}
+	return nil, &notExistError{
+		Path: path,
+	}
+}
+
 type writingFile struct {
 	*bytes.Buffer
 	path string
