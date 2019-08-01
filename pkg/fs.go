@@ -12,10 +12,26 @@ import (
 
 // File contains the metadata required to define a file (for reading).
 type File struct {
-	io.ReadCloser           // Underlying data.
-	Name          string    // Name of the file (likely basename).
-	ModTime       time.Time // Modified time of the file.
-	Size          int64     // Size of the file.
+	io.ReadCloser // Underlying data.
+	Attributes
+}
+
+// Attributes represents the metadata of a File
+// Inspired from github.com/google/go-cloud/blob.Attributes
+type Attributes struct {
+	// ContentType is the MIME type of the blob object. It will not be empty.
+	ContentType string
+	// Metadata holds key/value pairs associated with the blob.
+	// Keys are guaranteed to be in lowercase, even if the backend provider
+	// has case-sensitive keys (although note that Metadata written via
+	// this package will always be lowercased). If there are duplicate
+	// case-insensitive keys (e.g., "foo" and "FOO"), only one value
+	// will be kept, and it is undefined which one.
+	Metadata map[string]string
+	// ModTime is the time the blob object was last modified.
+	ModTime time.Time
+	// Size is the size of the object in bytes.
+	Size int64
 }
 
 // FS is an interface which defines a virtual filesystem.

@@ -63,9 +63,11 @@ func (c *cloudStorageFS) Open(ctx context.Context, path string) (*File, error) {
 
 	return &File{
 		ReadCloser: f,
-		Name:       path,
-		Size:       f.Size(),
-		ModTime:    f.ModTime(),
+		Attributes: Attributes{
+			ContentType: f.ContentType(),
+			Size:        f.Size(),
+			ModTime:     f.ModTime(),
+		},
 	}, nil
 }
 

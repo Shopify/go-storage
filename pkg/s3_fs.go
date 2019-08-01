@@ -41,9 +41,10 @@ func (s *s3FS) Open(ctx context.Context, path string) (*File, error) {
 
 	return &File{
 		ReadCloser: f,
-		Name:       path,
-		Size:       f.Size(),
-		ModTime:    f.ModTime(),
+		Attributes: Attributes{
+			Size:    f.Size(),
+			ModTime: f.ModTime(),
+		},
 	}, nil
 }
 

@@ -18,9 +18,8 @@ func NewMemoryFS() FS {
 }
 
 type memFile struct {
-	data    []byte
-	name    string
-	modTime time.Time
+	data  []byte
+	attrs Attributes
 }
 
 func (f *memFile) readCloser() io.ReadCloser {
@@ -42,9 +41,7 @@ func (m *memoryFS) Open(_ context.Context, path string) (*File, error) {
 	if ok {
 		return &File{
 			ReadCloser: f.readCloser(),
-			Name:       f.name,
-			ModTime:    f.modTime,
-			Size:       f.size(),
+			Attributes: f.attrs,
 		}, nil
 	}
 	return nil, &notExistError{
@@ -62,9 +59,10 @@ type writingFile struct {
 func (wf *writingFile) Close() error {
 	wf.m.Lock()
 	wf.m.data[wf.path] = &memFile{
-		data:    wf.Buffer.Bytes(),
-		name:    wf.path,
-		modTime: time.Now(),
+		data: wf.Buffer.Bytes(),
+		attrs: Attributes{
+			ModTime: time.Now(),
+		},
 	}
 	wf.m.Unlock()
 	return nil

@@ -40,21 +40,23 @@ func (l *localFS) wrapError(path string, err error) error {
 // Open implements FS.
 func (l *localFS) Open(_ context.Context, path string) (*File, error) {
 	path = l.fullPath(path)
-	stat, err := os.Stat(path)
-	if err != nil {
-		return nil, l.wrapError(path, err)
-	}
 
 	f, err := os.Open(path)
 	if err != nil {
 		return nil, l.wrapError(path, err)
 	}
 
+	stat, err := f.Stat()
+	if err != nil {
+		return nil, l.wrapError(path, err)
+	}
+
 	return &File{
 		ReadCloser: f,
-		Name:       stat.Name(),
-		ModTime:    stat.ModTime(),
-		Size:       stat.Size(),
+		Attributes: Attributes{
+			ModTime: stat.ModTime(),
+			Size:    stat.Size(),
+		},
 	}, nil
 }
 
