@@ -25,13 +25,13 @@ func (p *prefixWrapper) addPrefix(path string) string {
 }
 
 // Open implements FS.
-func (p *prefixWrapper) Open(ctx context.Context, path string) (*File, error) {
-	return p.fs.Open(ctx, p.addPrefix(path))
+func (p *prefixWrapper) Open(ctx context.Context, path string, options *ReaderOptions) (*File, error) {
+	return p.fs.Open(ctx, p.addPrefix(path), options)
 }
 
 // Create implements FS.
-func (p *prefixWrapper) Create(ctx context.Context, path string) (io.WriteCloser, error) {
-	return p.fs.Create(ctx, p.addPrefix(path))
+func (p *prefixWrapper) Create(ctx context.Context, path string, options *WriterOptions) (io.WriteCloser, error) {
+	return p.fs.Create(ctx, p.addPrefix(path), options)
 }
 
 // Delete implements FS.

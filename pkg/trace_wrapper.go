@@ -25,7 +25,7 @@ type traceWrapper struct {
 }
 
 // Open implements FS.  All calls to Open are logged via golang.org/x/net/trace.
-func (t *traceWrapper) Open(ctx context.Context, path string) (f *File, err error) {
+func (t *traceWrapper) Open(ctx context.Context, path string, options *ReaderOptions) (f *File, err error) {
 	if tr, ok := trace.FromContext(ctx); ok {
 		tr.LazyPrintf("%v: open: %v", t.name, path)
 		defer func() {
@@ -35,11 +35,12 @@ func (t *traceWrapper) Open(ctx context.Context, path string) (f *File, err erro
 			}
 		}()
 	}
-	return t.fs.Open(ctx, path)
+	return t.fs.Open(ctx, path, options)
 }
 
+
 // Create implements FS.  All calls to Create are logged via golang.org/x/net/trace.
-func (t *traceWrapper) Create(ctx context.Context, path string) (wc io.WriteCloser, err error) {
+func (t *traceWrapper) Create(ctx context.Context, path string, options *WriterOptions) (wc io.WriteCloser, err error) {
 	if tr, ok := trace.FromContext(ctx); ok {
 		tr.LazyPrintf("%v: create: %v", t.name, path)
 		defer func() {
@@ -49,7 +50,7 @@ func (t *traceWrapper) Create(ctx context.Context, path string) (wc io.WriteClos
 			}
 		}()
 	}
-	return t.fs.Create(ctx, path)
+	return t.fs.Create(ctx, path, options)
 }
 
 // Delete implements FS.  All calls to Delete are logged via golang.org/x/net/trace.

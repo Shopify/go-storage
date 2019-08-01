@@ -33,9 +33,9 @@ func (l *loggerWrapper) printf(format string, v ...interface{}) {
 }
 
 // Open implements FS.  All calls to Open are logged and errors are logged separately.
-func (l *loggerWrapper) Open(ctx context.Context, path string) (*File, error) {
+func (l *loggerWrapper) Open(ctx context.Context, path string, options *ReaderOptions) (*File, error) {
 	l.printf("%v: open: %v", l.name, path)
-	f, err := l.fs.Open(ctx, path)
+	f, err := l.fs.Open(ctx, path, options)
 	if err != nil {
 		l.printf("%v: open error: %v: %v", l.name, path, err)
 	}
@@ -43,9 +43,9 @@ func (l *loggerWrapper) Open(ctx context.Context, path string) (*File, error) {
 }
 
 // Create implements FS.  All calls to Create are logged and errors are logged separately.
-func (l *loggerWrapper) Create(ctx context.Context, path string) (io.WriteCloser, error) {
+func (l *loggerWrapper) Create(ctx context.Context, path string, options *WriterOptions) (io.WriteCloser, error) {
 	l.printf("%v: create: %v", l.name, path)
-	wc, err := l.fs.Create(ctx, path)
+	wc, err := l.fs.Create(ctx, path, options)
 	if err != nil {
 		l.printf("%v: create error: %v: %v", l.name, path, err)
 	}

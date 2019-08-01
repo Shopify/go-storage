@@ -34,12 +34,12 @@ type GetSetter interface {
 }
 
 // Open implements FS.
-func (hfs *hashWrapper) Open(ctx context.Context, path string) (*File, error) {
+func (hfs *hashWrapper) Open(ctx context.Context, path string, options *ReaderOptions) (*File, error) {
 	v, err := hfs.gs.Get(path)
 	if err != nil {
 		return nil, err
 	}
-	return hfs.fs.Open(ctx, v)
+	return hfs.fs.Open(ctx, v, options)
 }
 
 // Walk implements Walker.
@@ -52,7 +52,8 @@ type hashWriteCloser struct {
 	path string
 	ctx  context.Context
 
-	hfs *hashWrapper
+	hfs     *hashWrapper
+	options *WriterOptions
 }
 
 func (w *hashWriteCloser) Write(b []byte) (int, error) {
@@ -70,7 +71,7 @@ func (w *hashWriteCloser) Close() (err error) {
 		return err
 	}
 
-	fsw, err := w.hfs.fs.Create(w.ctx, hashPath)
+	fsw, err := w.hfs.fs.Create(w.ctx, hashPath, w.options)
 	if err != nil {
 		return err
 	}
@@ -87,12 +88,13 @@ func (w *hashWriteCloser) Close() (err error) {
 // TODO(trent): make sure that you document the FS.Create method
 // to Close it, and check the error. If err != nil then the file might not have
 // been written.
-func (hfs *hashWrapper) Create(ctx context.Context, path string) (io.WriteCloser, error) {
+func (hfs *hashWrapper) Create(ctx context.Context, path string, options *WriterOptions) (io.WriteCloser, error) {
 	return &hashWriteCloser{
-		buf:  &bytes.Buffer{},
-		path: path,
-		ctx:  ctx,
-		hfs:  hfs,
+		buf:     &bytes.Buffer{},
+		path:    path,
+		ctx:     ctx,
+		hfs:     hfs,
+		options: options,
 	}, nil
 }
 

@@ -14,7 +14,7 @@ import (
 func testOpenExists(t *testing.T, fs storage.FS, path string, content string) {
 	ctx := context.Background()
 
-	f, err := fs.Open(ctx, path)
+	f, err := fs.Open(ctx, path, nil)
 	assert.NoError(t, err)
 
 	b, err := ioutil.ReadAll(f)
@@ -29,14 +29,14 @@ func testOpenExists(t *testing.T, fs storage.FS, path string, content string) {
 
 func testOpenNotExists(t *testing.T, fs storage.FS, path string) {
 	ctx := context.Background()
-	_, err := fs.Open(ctx, "foo")
+	_, err := fs.Open(ctx, path, nil)
 	assert.Errorf(t, err, "storage %s: path does not exist", path)
 }
 
 func testCreate(t *testing.T, fs storage.FS, path string, content string) {
 	ctx := context.Background()
 
-	wc, err := fs.Create(ctx, path)
+	wc, err := fs.Create(ctx, path, nil)
 	assert.NoError(t, err)
 
 	_, err = io.WriteString(wc, content)
