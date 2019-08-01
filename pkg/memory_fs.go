@@ -27,10 +27,6 @@ func (f *memFile) readCloser() io.ReadCloser {
 	return ioutil.NopCloser(bytes.NewReader(f.data))
 }
 
-func (f *memFile) size() int64 {
-	return int64(len(f.data))
-}
-
 type memoryFS struct {
 	sync.RWMutex
 
