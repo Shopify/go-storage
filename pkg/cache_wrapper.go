@@ -12,8 +12,8 @@ type CacheOptions struct {
 	// If the expired File is still present on the src (i.e. not updated), it will be ignored.
 	MaxAge time.Duration
 
-	// DefaultExpired makes the cache treat a File as expired if its ModTime cannot be checked.
-	// By default, it is false, which means the cache will treat zero-ModTime files as valid.
+	// DefaultExpired makes the cache treat a File as expired if its CreationTime cannot be checked.
+	// By default, it is false, which means the cache will treat zero-CreationTime files as valid.
 	// Only useful if MaxAge is set.
 	DefaultExpired bool
 }
@@ -43,26 +43,25 @@ func (c *cacheWrapper) isExpired(file *File) bool {
 		return false
 	}
 
-	if file.ModTime.IsZero() {
-		// Unable to check the File's ModTime
+	creationTime := file.CreationTime
+	if creationTime.IsZero() {
+		creationTime = file.ModTime // Fallback to ModTime
+	}
+	if creationTime.IsZero() {
 		return c.options.DefaultExpired
 	}
 
-	return time.Since(file.ModTime) > c.options.MaxAge
+	return time.Since(creationTime) > c.options.MaxAge
 }
 
 // Open implements FS.
 func (c *cacheWrapper) Open(ctx context.Context, path string, options *ReaderOptions) (*File, error) {
 	f, err := c.cache.Open(ctx, path, options)
 	if err == nil {
-		if c.isExpired(f) {
-			err = &expiredError{Path: path}
-		} else {
+		if !c.isExpired(f) {
 			return f, nil
 		}
-	}
-
-	if !IsNotExist(err) {
+	} else if !IsNotExist(err) {
 		return nil, err
 	}
 
@@ -72,14 +71,8 @@ func (c *cacheWrapper) Open(ctx context.Context, path string, options *ReaderOpt
 	}
 	defer sf.Close()
 
-	if c.isExpired(sf) {
-		// Cleanup expire entry, but don't care for deletion errors
-		c.cache.Delete(ctx, path)
-
-		return nil, &expiredError{Path: path}
-	}
-
 	cacheAttrs := sf.Attributes
+	cacheAttrs.CreationTime = time.Now() // The cache requires the CreationTime, so the original value is overwritten
 	wc, err := c.cache.Create(ctx, path, &WriterOptions{
 		Attributes: cacheAttrs,
 	})

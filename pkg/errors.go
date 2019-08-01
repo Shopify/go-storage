@@ -32,17 +32,3 @@ func (e *notExistError) isNotExist() bool { return true }
 func (e *notExistError) Error() string {
 	return fmt.Sprintf("storage %v: path does not exist", e.Path)
 }
-
-// expiredError is returned from FS.Open implementations when a requested
-// path exists, but is expired.
-// It behaves like a notExistError, but with a different error message.
-type expiredError struct {
-	Path string
-}
-
-func (e *expiredError) isNotExist() bool { return true }
-
-// Error implements error
-func (e *expiredError) Error() string {
-	return fmt.Sprintf("storage %v: path exists, but is expired", e.Path)
-}

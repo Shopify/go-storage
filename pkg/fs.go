@@ -30,6 +30,8 @@ type Attributes struct {
 	Metadata map[string]string
 	// ModTime is the time the blob object was last modified.
 	ModTime time.Time
+	// CreationTime is the time the blob object was created.
+	CreationTime time.Time
 	// Size is the size of the object in bytes.
 	Size int64
 }
