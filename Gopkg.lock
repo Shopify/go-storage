@@ -85,7 +85,7 @@
   version = "v1.2.0"
 
 [[projects]]
-  digest = "1:d094f8c02eb7e50c32f20c207f08e59d5814bbd3a0e7238439359374f59c37ba"
+  digest = "1:202be305d484fac1e941a2b0345b50d6035fce327ac0184b50b977575006ea4f"
   name = "github.com/google/go-cloud"
   packages = [
     "blob",
@@ -93,11 +93,18 @@
     "blob/gcsblob",
     "blob/s3blob",
     "gcp",
-    "wire",
   ]
   pruneopts = "UT"
-  revision = "2152f209f3c907645f7ebdcacdb2c18cd89e6fa8"
-  version = "0.5.0"
+  revision = "e981f0586e2290f34ecf78282261b3693a894ec8"
+  version = "v0.7.0"
+
+[[projects]]
+  digest = "1:fb39a574fbc3230a6a93530aa17215c6b79049a0a2d30b6d19db6f809a6e56f0"
+  name = "github.com/google/wire"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "89cb901fdf9dfcf4292cbfe0c9ac90d98213be68"
+  version = "v0.3.0"
 
 [[projects]]
   digest = "1:e145e9710a10bc114a6d3e2738aadf8de146adaa031854ffdf7bbfe15da85e63"
@@ -325,7 +332,6 @@
     "github.com/stretchr/testify/assert",
     "golang.org/x/net/trace",
     "golang.org/x/oauth2/google",
-    "google.golang.org/api/iterator",
     "google.golang.org/api/storage/v1",
   ]
   solver-name = "gps-cdcl"

@@ -29,7 +29,7 @@ func (s *s3FS) Open(ctx context.Context, path string) (*File, error) {
 		return nil, err
 	}
 
-	f, err := b.NewReader(ctx, path)
+	f, err := b.NewReader(ctx, path, nil)
 	if err != nil {
 		if blob.IsNotExist(err) {
 			return nil, &notExistError{
@@ -72,7 +72,7 @@ func (s *s3FS) Walk(ctx context.Context, path string, fn WalkFn) error {
 		return err
 	}
 
-	it, err := bh.List(ctx, &blob.ListOptions{
+	it := bh.List(&blob.ListOptions{
 		Prefix: path,
 	})
 	if err != nil {
