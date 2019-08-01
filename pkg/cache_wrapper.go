@@ -16,6 +16,9 @@ type CacheOptions struct {
 	// By default, it is false, which means the cache will treat zero-CreationTime files as valid.
 	// Only useful if MaxAge is set.
 	DefaultExpired bool
+
+	// NoData disables caching of the contents of the entries, it only stores the metadata.
+	NoData bool
 }
 
 // NewCacheWrapper creates an FS implementation which caches files opened from src into cache.
@@ -29,6 +32,38 @@ func NewCacheWrapper(src, cache FS, options *CacheOptions) FS {
 		cache:   cache,
 		options: options,
 	}
+}
+
+type openForwarder struct {
+	src func() (io.ReadCloser, error)
+	rc  io.ReadCloser
+}
+
+func (f *openForwarder) open() error {
+	if f.rc != nil {
+		return nil
+	}
+
+	rc, err := f.src()
+	if err != nil {
+		return err
+	}
+	f.rc = rc
+	return nil
+}
+
+func (f *openForwarder) Read(p []byte) (n int, err error) {
+	if err = f.open(); err != nil {
+		return 0, err
+	}
+	return f.rc.Read(p)
+}
+
+func (f *openForwarder) Close() (err error) {
+	if f.rc == nil {
+		return nil
+	}
+	return f.rc.Close()
 }
 
 type cacheWrapper struct {
@@ -54,9 +89,26 @@ func (c *cacheWrapper) isExpired(file *File) bool {
 	return time.Since(creationTime) > c.options.MaxAge
 }
 
+func (c *cacheWrapper) openCache(ctx context.Context, path string, options *ReaderOptions) (*File, error) {
+	f, err := c.cache.Open(ctx, path, options)
+	if err != nil {
+		return nil, err
+	}
+	if c.options.NoData {
+		// Override the ReadCloser to actually fetch from the src
+		// If Read is not called, it still allows to read the attributes
+		f.ReadCloser = &openForwarder{
+			src: func() (io.ReadCloser, error) {
+				return c.src.Open(ctx, path, options)
+			},
+		}
+	}
+	return f, nil
+}
+
 // Open implements FS.
 func (c *cacheWrapper) Open(ctx context.Context, path string, options *ReaderOptions) (*File, error) {
-	f, err := c.cache.Open(ctx, path, options)
+	f, err := c.openCache(ctx, path, options)
 	if err == nil {
 		if !c.isExpired(f) {
 			return f, nil
@@ -80,16 +132,18 @@ func (c *cacheWrapper) Open(ctx context.Context, path string, options *ReaderOpt
 		return nil, err
 	}
 
-	if _, err := io.Copy(wc, sf); err != nil {
-		wc.Close()
-		return nil, err
+	if !c.options.NoData {
+		if _, err := io.Copy(wc, sf); err != nil {
+			wc.Close()
+			return nil, err
+		}
 	}
 
 	if err := wc.Close(); err != nil {
 		return nil, err
 	}
 
-	ff, err := c.cache.Open(ctx, path, options)
+	ff, err := c.openCache(ctx, path, options)
 	if err != nil {
 		return nil, err
 	}
