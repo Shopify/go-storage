@@ -87,3 +87,15 @@ func TestCacheWrapper_CacheOptions_MaxAge(t *testing.T) {
 		assert.True(t, f2.CreationTime.After(f.CreationTime)) // New cache
 	})
 }
+
+func TestCacheWrapper_CacheOptions_NoData(t *testing.T) {
+	options := &storage.CacheOptions{
+		NoData: true,
+	}
+
+	withCache(options, func(fs storage.FS, src storage.FS, cache storage.FS) {
+		testCreate(t, fs, "foo", "bar")
+
+		testOpenExists(t, cache, "foo", "") // No content actually stored
+	})
+}
