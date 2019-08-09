@@ -19,6 +19,15 @@ func withCache(options *storage.CacheOptions, cb func(fs storage.FS, src storage
 	})
 }
 
+func withFileCache(options *storage.CacheOptions, cb func(fs storage.FS, src storage.FS, cache storage.FS)) {
+	withLocal(func(local storage.FS) {
+		withLocal(func(localCache storage.FS) {
+			fs := storage.NewCacheWrapper(local, localCache, options)
+			cb(fs, local, localCache)
+		})
+	})
+}
+
 func TestCacheWrapper_Open(t *testing.T) {
 	withCache(nil, func(fs storage.FS, src storage.FS, cache storage.FS) {
 		testOpenNotExists(t, fs, "foo")
@@ -27,6 +36,18 @@ func TestCacheWrapper_Open(t *testing.T) {
 
 func TestCacheWrapper_Create(t *testing.T) {
 	withCache(nil, func(fs storage.FS, src storage.FS, cache storage.FS) {
+		testCreate(t, fs, "foo", "")
+		testOpenExists(t, src, "foo", "")
+		testOpenExists(t, cache, "foo", "")
+
+		testCreate(t, fs, "foo", "bar")
+		testOpenExists(t, src, "foo", "bar")
+		testOpenExists(t, cache, "foo", "bar")
+	})
+}
+
+func TestCacheWrapper_Create_fileCache(t *testing.T) {
+	withFileCache(nil, func(fs storage.FS, src storage.FS, cache storage.FS) {
 		testCreate(t, fs, "foo", "")
 		testOpenExists(t, src, "foo", "")
 		testOpenExists(t, cache, "foo", "")
@@ -55,19 +76,14 @@ func TestCacheWrapper_CacheOptions_MaxAge(t *testing.T) {
 		f, err := fs.Open(ctx, "foo", nil)
 		assert.NoError(t, err)
 		assert.NotZero(t, f)
-		assert.NotZero(t, f.ModTime)
-		assert.False(t, time.Since(f.ModTime) > options.MaxAge, "file should not be expired")
+		assert.NotZero(t, f.CreationTime)
+		assert.True(t, time.Since(f.CreationTime) < options.MaxAge, "file should not be expired")
 
 		<-time.After(options.MaxAge)
 
-		_, err = fs.Open(ctx, "foo", nil)
-		assert.Errorf(t, err, "storage foo: path exists, but is expired")
-
-		f, err = cache.Open(ctx, "foo", nil)
-		assert.Errorf(t, err, "storage foo: path does not exist")
-
-		// Wrapper still reports expired
-		_, err = fs.Open(ctx, "foo", nil)
-		assert.Errorf(t, err, "storage foo: path exists, but is expired")
+		f2, err := fs.Open(ctx, "foo", nil)
+		assert.NoError(t, err)
+		assert.NotZero(t, f2.CreationTime)
+		assert.True(t, f2.CreationTime.After(f.CreationTime)) // New cache
 	})
 }

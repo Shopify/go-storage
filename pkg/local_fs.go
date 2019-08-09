@@ -91,9 +91,16 @@ func (l *localFS) Create(_ context.Context, path string, options *WriterOptions)
 	if err != nil {
 		return nil, err
 	}
-	if options != nil && !options.Attributes.ModTime.IsZero() {
-		if err := os.Chtimes(path, options.Attributes.ModTime, options.Attributes.ModTime); err != nil {
-			return f, err
+	if options != nil {
+		if !options.Attributes.CreationTime.IsZero() {
+			// There is no way to store the CreationTime, so overwrite the ModTime
+			// This is necessary so the CacheWrapper can use LocalFS
+			options.Attributes.ModTime = options.Attributes.CreationTime
+		}
+		if !options.Attributes.ModTime.IsZero() {
+			if err := os.Chtimes(path, options.Attributes.ModTime, options.Attributes.ModTime); err != nil {
+				return f, err
+			}
 		}
 	}
 	return f, nil
