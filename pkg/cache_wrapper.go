@@ -52,8 +52,8 @@ func (c *cacheWrapper) isExpired(file *File) bool {
 }
 
 // Open implements FS.
-func (c *cacheWrapper) Open(ctx context.Context, path string) (*File, error) {
-	f, err := c.cache.Open(ctx, path)
+func (c *cacheWrapper) Open(ctx context.Context, path string, options *ReaderOptions) (*File, error) {
+	f, err := c.cache.Open(ctx, path, options)
 	if err == nil {
 		if c.isExpired(f) {
 			err = &expiredError{Path: path}
@@ -66,7 +66,7 @@ func (c *cacheWrapper) Open(ctx context.Context, path string) (*File, error) {
 		return nil, err
 	}
 
-	sf, err := c.src.Open(ctx, path)
+	sf, err := c.src.Open(ctx, path, options)
 	if err != nil {
 		return nil, err
 	}
@@ -79,7 +79,10 @@ func (c *cacheWrapper) Open(ctx context.Context, path string) (*File, error) {
 		return nil, &expiredError{Path: path}
 	}
 
-	wc, err := c.cache.Create(ctx, path)
+	cacheAttrs := sf.Attributes
+	wc, err := c.cache.Create(ctx, path, &WriterOptions{
+		Attributes: cacheAttrs,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -93,7 +96,7 @@ func (c *cacheWrapper) Open(ctx context.Context, path string) (*File, error) {
 		return nil, err
 	}
 
-	ff, err := c.cache.Open(ctx, path)
+	ff, err := c.cache.Open(ctx, path, options)
 	if err != nil {
 		return nil, err
 	}
@@ -110,12 +113,12 @@ func (c *cacheWrapper) Delete(ctx context.Context, path string) error {
 }
 
 // Create implements FS.
-func (c *cacheWrapper) Create(ctx context.Context, path string) (io.WriteCloser, error) {
+func (c *cacheWrapper) Create(ctx context.Context, path string, options *WriterOptions) (io.WriteCloser, error) {
 	err := c.cache.Delete(ctx, path)
 	if err != nil && !IsNotExist(err) {
 		return nil, err
 	}
-	return c.src.Create(ctx, path)
+	return c.src.Create(ctx, path, options)
 }
 
 // Walk implements FS.

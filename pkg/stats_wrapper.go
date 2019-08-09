@@ -48,8 +48,8 @@ type statsWrapper struct {
 }
 
 // Open implements FS.  All errors from Open are counted.
-func (s *statsWrapper) Open(ctx context.Context, path string) (*File, error) {
-	f, err := s.fs.Open(ctx, path)
+func (s *statsWrapper) Open(ctx context.Context, path string, options *ReaderOptions) (*File, error) {
+	f, err := s.fs.Open(ctx, path, options)
 	if err != nil {
 		s.status.Add(StatOpenErrors, 1)
 	}
@@ -58,8 +58,8 @@ func (s *statsWrapper) Open(ctx context.Context, path string) (*File, error) {
 }
 
 // Create implements FS.  All errors from Create are counted.
-func (s *statsWrapper) Create(ctx context.Context, path string) (io.WriteCloser, error) {
-	wc, err := s.fs.Create(ctx, path)
+func (s *statsWrapper) Create(ctx context.Context, path string, options *WriterOptions) (io.WriteCloser, error) {
+	wc, err := s.fs.Create(ctx, path, options)
 	if err != nil {
 		s.status.Add(StatCreateErrors, 1)
 	}

@@ -45,7 +45,7 @@ func (c *cloudStorageFS) URL(ctx context.Context, path string, options *SignedUR
 }
 
 // Open implements FS.
-func (c *cloudStorageFS) Open(ctx context.Context, path string) (*File, error) {
+func (c *cloudStorageFS) Open(ctx context.Context, path string, options *ReaderOptions) (*File, error) {
 	b, err := c.blobBucketHandle(ctx, storage.DevstorageReadOnlyScope)
 	if err != nil {
 		return nil, err
@@ -72,12 +72,19 @@ func (c *cloudStorageFS) Open(ctx context.Context, path string) (*File, error) {
 }
 
 // Create implements FS.
-func (c *cloudStorageFS) Create(ctx context.Context, path string) (io.WriteCloser, error) {
+func (c *cloudStorageFS) Create(ctx context.Context, path string, options *WriterOptions) (io.WriteCloser, error) {
 	b, err := c.blobBucketHandle(ctx, storage.DevstorageReadWriteScope)
 	if err != nil {
 		return nil, err
 	}
-	return b.NewWriter(ctx, path, nil)
+	var blobOpts *blob.WriterOptions
+	if options != nil {
+		blobOpts = &blob.WriterOptions{
+			Metadata:    options.Attributes.Metadata,
+			ContentType: options.Attributes.ContentType,
+		}
+	}
+	return b.NewWriter(ctx, path, blobOpts)
 }
 
 // Delete implements FS.

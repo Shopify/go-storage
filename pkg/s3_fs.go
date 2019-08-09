@@ -23,7 +23,7 @@ type s3FS struct {
 }
 
 // Open implements FS.
-func (s *s3FS) Open(ctx context.Context, path string) (*File, error) {
+func (s *s3FS) Open(ctx context.Context, path string, options *ReaderOptions) (*File, error) {
 	b, err := s.bucketHandles(ctx)
 	if err != nil {
 		return nil, err
@@ -49,12 +49,19 @@ func (s *s3FS) Open(ctx context.Context, path string) (*File, error) {
 }
 
 // Create implements FS.
-func (s *s3FS) Create(ctx context.Context, path string) (io.WriteCloser, error) {
+func (s *s3FS) Create(ctx context.Context, path string, options *WriterOptions) (io.WriteCloser, error) {
 	b, err := s.bucketHandles(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return b.NewWriter(ctx, path, nil)
+	var blobOpts *blob.WriterOptions
+	if options != nil {
+		blobOpts = &blob.WriterOptions{
+			Metadata:    options.Attributes.Metadata,
+			ContentType: options.Attributes.ContentType,
+		}
+	}
+	return b.NewWriter(ctx, path, blobOpts)
 }
 
 // Delete implements FS.

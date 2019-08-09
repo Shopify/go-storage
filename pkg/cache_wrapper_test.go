@@ -52,7 +52,7 @@ func TestCacheWrapper_CacheOptions_MaxAge(t *testing.T) {
 		testCreate(t, fs, "foo", "")
 
 		ctx := context.Background()
-		f, err := fs.Open(ctx, "foo")
+		f, err := fs.Open(ctx, "foo", nil)
 		assert.NoError(t, err)
 		assert.NotZero(t, f)
 		assert.NotZero(t, f.ModTime)
@@ -60,14 +60,14 @@ func TestCacheWrapper_CacheOptions_MaxAge(t *testing.T) {
 
 		<-time.After(options.MaxAge)
 
-		_, err = fs.Open(ctx, "foo")
+		_, err = fs.Open(ctx, "foo", nil)
 		assert.Errorf(t, err, "storage foo: path exists, but is expired")
 
-		f, err = cache.Open(ctx, "foo")
+		f, err = cache.Open(ctx, "foo", nil)
 		assert.Errorf(t, err, "storage foo: path does not exist")
 
 		// Wrapper still reports expired
-		_, err = fs.Open(ctx, "foo")
+		_, err = fs.Open(ctx, "foo", nil)
 		assert.Errorf(t, err, "storage foo: path exists, but is expired")
 	})
 }

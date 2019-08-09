@@ -34,18 +34,30 @@ type Attributes struct {
 	Size int64
 }
 
+// ReaderOptions are used to modify the behaviour of read operations.
+// Inspired from github.com/google/go-cloud/blob.ReaderOptions
+// It is provided for future extensibility.
+type ReaderOptions struct{}
+
+// WriterOptions are used to modify the behaviour of write operations.
+// Inspired from github.com/google/go-cloud/blob.WriterOptions
+// Not all options are supported by all FS
+type WriterOptions struct {
+	Attributes Attributes
+}
+
 // FS is an interface which defines a virtual filesystem.
 type FS interface {
 	Walker
 
 	// Open opens an existing file at path in the filesystem.  Callers must close the
 	// File when done to release all underlying resources.
-	Open(ctx context.Context, path string) (*File, error)
+	Open(ctx context.Context, path string, options *ReaderOptions) (*File, error)
 
 	// Create makes a new file at path in the filesystem.  Callers must close the
 	// returned WriteCloser and check the error to be sure that the file
 	// was successfully written.
-	Create(ctx context.Context, path string) (io.WriteCloser, error)
+	Create(ctx context.Context, path string, options *WriterOptions) (io.WriteCloser, error)
 
 	// Delete removes a path from the filesystem.
 	Delete(ctx context.Context, path string) error
