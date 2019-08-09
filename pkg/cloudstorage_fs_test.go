@@ -10,8 +10,9 @@ import (
 	"os"
 	"testing"
 
-	"github.com/Shopify/go-storage/pkg"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/Shopify/go-storage/pkg"
 )
 
 func Test_cloudStorageFS_URL(t *testing.T) {

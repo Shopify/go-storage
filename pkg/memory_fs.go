@@ -18,17 +18,12 @@ func NewMemoryFS() FS {
 }
 
 type memFile struct {
-	data    []byte
-	name    string
-	modTime time.Time
+	data  []byte
+	attrs Attributes
 }
 
 func (f *memFile) readCloser() io.ReadCloser {
 	return ioutil.NopCloser(bytes.NewReader(f.data))
-}
-
-func (f *memFile) size() int64 {
-	return int64(len(f.data))
 }
 
 type memoryFS struct {
@@ -38,7 +33,7 @@ type memoryFS struct {
 }
 
 // Open implements FS.
-func (m *memoryFS) Open(_ context.Context, path string) (*File, error) {
+func (m *memoryFS) Open(_ context.Context, path string, options *ReaderOptions) (*File, error) {
 	m.RLock()
 	f, ok := m.data[path]
 	m.RUnlock()
@@ -46,9 +41,7 @@ func (m *memoryFS) Open(_ context.Context, path string) (*File, error) {
 	if ok {
 		return &File{
 			ReadCloser: f.readCloser(),
-			Name:       f.name,
-			ModTime:    f.modTime,
-			Size:       f.size(),
+			Attributes: f.attrs,
 		}, nil
 	}
 	return nil, &notExistError{
@@ -60,26 +53,38 @@ type writingFile struct {
 	*bytes.Buffer
 	path string
 
-	m *memoryFS
+	m       *memoryFS
+	options *WriterOptions
 }
 
 func (wf *writingFile) Close() error {
+	if wf.options.Attributes.Size == 0 {
+		wf.options.Attributes.Size = int64(wf.Buffer.Len())
+	}
+
 	wf.m.Lock()
+	// Record time with the lock so the time is accurate
+	if wf.options.Attributes.ModTime.IsZero() {
+		wf.options.Attributes.ModTime = time.Now()
+	}
 	wf.m.data[wf.path] = &memFile{
-		data:    wf.Buffer.Bytes(),
-		name:    wf.path,
-		modTime: time.Now(),
+		data:  wf.Buffer.Bytes(),
+		attrs: wf.options.Attributes,
 	}
 	wf.m.Unlock()
 	return nil
 }
 
 // Create implements FS.  NB: Callers must close the io.WriteCloser to create the file.
-func (m *memoryFS) Create(_ context.Context, path string) (io.WriteCloser, error) {
+func (m *memoryFS) Create(_ context.Context, path string, options *WriterOptions) (io.WriteCloser, error) {
+	if options == nil {
+		options = &WriterOptions{}
+	}
 	return &writingFile{
-		Buffer: &bytes.Buffer{},
-		path:   path,
-		m:      m,
+		Buffer:  &bytes.Buffer{},
+		path:    path,
+		m:       m,
+		options: options,
 	}, nil
 }
 

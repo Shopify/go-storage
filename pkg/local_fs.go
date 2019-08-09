@@ -38,39 +38,48 @@ func (l *localFS) wrapError(path string, err error) error {
 }
 
 // Open implements FS.
-func (l *localFS) Open(_ context.Context, path string) (*File, error) {
+func (l *localFS) Open(_ context.Context, path string, options *ReaderOptions) (*File, error) {
 	path = l.fullPath(path)
-	stat, err := os.Stat(path)
-	if err != nil {
-		return nil, l.wrapError(path, err)
-	}
 
 	f, err := os.Open(path)
 	if err != nil {
 		return nil, l.wrapError(path, err)
 	}
 
+	stat, err := f.Stat()
+	if err != nil {
+		return nil, l.wrapError(path, err)
+	}
+
 	return &File{
 		ReadCloser: f,
-		Name:       stat.Name(),
-		ModTime:    stat.ModTime(),
-		Size:       stat.Size(),
+		Attributes: Attributes{
+			ModTime: stat.ModTime(),
+			Size:    stat.Size(),
+		},
 	}, nil
 }
 
 // Create implements FS.  If the path contains any directories which do not already exist
 // then Create will try to make them, returning an error if it fails.
-func (l *localFS) Create(_ context.Context, path string) (io.WriteCloser, error) {
-	dir := l.fullPath(filepath.Dir(path))
+func (l *localFS) Create(_ context.Context, path string, options *WriterOptions) (io.WriteCloser, error) {
+	path = l.fullPath(path)
+
+	dir := filepath.Dir(path)
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
 		if err := os.MkdirAll(dir, LocalCreatePathMode); err != nil {
 			return nil, err
 		}
 	}
 
-	f, err := os.Create(l.fullPath(path))
+	f, err := os.Create(path)
 	if err != nil {
 		return nil, err
+	}
+	if options != nil && !options.Attributes.ModTime.IsZero() {
+		if err := os.Chtimes(path, options.Attributes.ModTime, options.Attributes.ModTime); err != nil {
+			return f, err
+		}
 	}
 	return f, nil
 }

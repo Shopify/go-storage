@@ -12,10 +12,38 @@ import (
 
 // File contains the metadata required to define a file (for reading).
 type File struct {
-	io.ReadCloser           // Underlying data.
-	Name          string    // Name of the file (likely basename).
-	ModTime       time.Time // Modified time of the file.
-	Size          int64     // Size of the file.
+	io.ReadCloser // Underlying data.
+	Attributes
+}
+
+// Attributes represents the metadata of a File
+// Inspired from github.com/google/go-cloud/blob.Attributes
+type Attributes struct {
+	// ContentType is the MIME type of the blob object. It will not be empty.
+	ContentType string
+	// Metadata holds key/value pairs associated with the blob.
+	// Keys are guaranteed to be in lowercase, even if the backend provider
+	// has case-sensitive keys (although note that Metadata written via
+	// this package will always be lowercased). If there are duplicate
+	// case-insensitive keys (e.g., "foo" and "FOO"), only one value
+	// will be kept, and it is undefined which one.
+	Metadata map[string]string
+	// ModTime is the time the blob object was last modified.
+	ModTime time.Time
+	// Size is the size of the object in bytes.
+	Size int64
+}
+
+// ReaderOptions are used to modify the behaviour of read operations.
+// Inspired from github.com/google/go-cloud/blob.ReaderOptions
+// It is provided for future extensibility.
+type ReaderOptions struct{}
+
+// WriterOptions are used to modify the behaviour of write operations.
+// Inspired from github.com/google/go-cloud/blob.WriterOptions
+// Not all options are supported by all FS
+type WriterOptions struct {
+	Attributes Attributes
 }
 
 // FS is an interface which defines a virtual filesystem.
@@ -24,12 +52,12 @@ type FS interface {
 
 	// Open opens an existing file at path in the filesystem.  Callers must close the
 	// File when done to release all underlying resources.
-	Open(ctx context.Context, path string) (*File, error)
+	Open(ctx context.Context, path string, options *ReaderOptions) (*File, error)
 
 	// Create makes a new file at path in the filesystem.  Callers must close the
 	// returned WriteCloser and check the error to be sure that the file
 	// was successfully written.
-	Create(ctx context.Context, path string) (io.WriteCloser, error)
+	Create(ctx context.Context, path string, options *WriterOptions) (io.WriteCloser, error)
 
 	// Delete removes a path from the filesystem.
 	Delete(ctx context.Context, path string) error

@@ -24,18 +24,18 @@ type FS interface {
 
 	// Open opens an existing file at path in the filesystem.  Callers must close the
 	// File when done to release all underlying resources.
-	Open(ctx context.Context, path string) (*File, error)
+	Open(ctx context.Context, path string, options *ReaderOptions) (*File, error)
 
 	// Create makes a new file at path in the filesystem.  Callers must close the
 	// returned WriteCloser and check the error to be sure that the file
 	// was successfully written.
-	Create(ctx context.Context, path string) (io.WriteCloser, error)
+	Create(ctx context.Context, path string, options *WriterOptions) (io.WriteCloser, error)
 
 	// Delete removes a path from the filesystem.
 	Delete(ctx context.Context, path string) error
 
 	// URL resolves a path to an addressable URL
-	URL(ctx context.Context, path string, options *URLOptions) (string, error)
+	URL(ctx context.Context, path string, options *SignedURLOptions) (string, error)
 }
 
 // WalkFn is a function type which is passed to Walk.
@@ -55,7 +55,7 @@ Local is the default implementation of a local file system (i.e. using `os.Open`
 
 ```go
 local := storage.NewLocalFS("/some/root/path")
-f, err := local.Open(context.Background(), "file.json") // will open "/some/root/path/file.json"
+f, err := local.Open(context.Background(), "file.json", nil) // will open "/some/root/path/file.json"
 if err != nil {
 	// ...
 }
@@ -69,7 +69,7 @@ Mem is the default in-memory implementation of a file system.
 
 ```go
 mem := storage.NewMemoryFS()
-wc, err := mem.Create(context.Background(), "file.txt")
+wc, err := mem.Create(context.Background(), "file.txt", nil)
 if err != nil {
 	// ...
 }
@@ -84,7 +84,7 @@ if err := wc.Close(); err != nil {
 And now:
 
 ```go
-f, err := mem.Open(context.Background(), "file.txt")
+f, err := mem.Open(context.Background(), "file.txt", nil)
 if err != nil {
 	// ...
 }
@@ -98,7 +98,7 @@ CloudStorage is the default implementation of Google Cloud Storage.  This uses [
 
 ```go
 store := storage.NewCloudStorageFS("some-bucket")
-f, err := store.Open(context.Background(), "file.json") // will fetch "gs://some-bucket/file.json"
+f, err := store.Open(context.Background(), "file.json", nil) // will fetch "gs://some-bucket/file.json"
 if err != nil {
 	// ...
 }
@@ -111,7 +111,7 @@ f.Close()
 S3 is the default implementation for AWS S3. This uses [aws-sdk-go/aws/session.NewSession](http://docs.aws.amazon.com/sdk-for-go/api/aws/session/#NewSession) for authentication.
  ```go
 store := storage.S3{Bucket:"some-bucket"}
-f, err := store.Open(context.Background(), "file.json") // will fetch "s3://some-bucket/file.json
+f, err := store.Open(context.Background(), "file.json", nil) // will fetch "s3://some-bucket/file.json
 if err != nil {
 	// ...
 }
@@ -130,14 +130,14 @@ src := storage.NewCloudStorageFS("some-bucket")
 local := storage.NewLocalFS("/scratch-space")
 
 fs := storage.NewCacheWrapper(src, local)
-f, err := fs.Open(context.Background(), "file.json") // will try src then jump to cache ("gs://some-bucket/file.json")
+f, err := fs.Open(context.Background(), "file.json", nil) // will try src then jump to cache ("gs://some-bucket/file.json")
 if err != nil {
 	// ...
 }
 // ...
 f.Close()
 
-f, err := fs.Open(context.Background(), "file.json") // should now be cached ("/scratch-space/file.json")
+f, err := fs.Open(context.Background(), "file.json", nil) // should now be cached ("/scratch-space/file.json")
 if err != nil {
 	// ...
 }
@@ -156,14 +156,14 @@ fs2 := storage.NewCacheWrapper(mainSrc, fs) // fs is from previous snippet
 // 2. Try gs://some-bucket
 // 3. Try gs://some-bucket-in-another-region, which will be cached in gs://some-bucket and then local on its
 //    way back to the caller.
-f, err := fs2.Open(context.Background(), "file.json") // will fetch "gs://some-bucket-in-another-region/file.json"
+f, err := fs2.Open(context.Background(), "file.json", nil) // will fetch "gs://some-bucket-in-another-region/file.json"
 if err != nil {
 	// ...
 }
 // ...
 f.Close()
 
-f, err := fs2.Open(context.Background(), "file.json") // will fetch "/scratch-space/file.json"
+f, err := fs2.Open(context.Background(), "file.json", nil) // will fetch "/scratch-space/file.json"
 if err != nil {
 	// ...
 }
@@ -177,7 +177,7 @@ If you're writing code that relies on a set directory structure, it can be very 
 
 ```go
 modelFS := storage.NewPrefixWrapper(rootFS, "models/")
-f, err := modelFS.Open(context.Background(), "file.json") // will call rootFS.Open with path "models/file.json"
+f, err := modelFS.Open(context.Background(), "file.json", nil) // will call rootFS.Open with path "models/file.json"
 if err != nil {
 	// ...
 }
@@ -193,7 +193,7 @@ func NewUserFS(fs storage.FS, userID, mediaType string) FS {
 }
 
 userFS := NewUserFS(rootFS, "1111", "pics")
-f, err := userFS.Open(context.Background(), "beach.png") // will call rootFS.Open with path "1111/pics/beach.png"
+f, err := userFS.Open(context.Background(), "beach.png", nil) // will call rootFS.Open with path "1111/pics/beach.png"
 if err != nil {
 	// ...
 }

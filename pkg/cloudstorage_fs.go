@@ -45,13 +45,13 @@ func (c *cloudStorageFS) URL(ctx context.Context, path string, options *SignedUR
 }
 
 // Open implements FS.
-func (c *cloudStorageFS) Open(ctx context.Context, path string) (*File, error) {
+func (c *cloudStorageFS) Open(ctx context.Context, path string, options *ReaderOptions) (*File, error) {
 	b, err := c.blobBucketHandle(ctx, storage.DevstorageReadOnlyScope)
 	if err != nil {
 		return nil, err
 	}
 
-	f, err := b.NewReader(ctx, path)
+	f, err := b.NewReader(ctx, path, nil)
 	if err != nil {
 		if blob.IsNotExist(err) {
 			return nil, &notExistError{
@@ -63,19 +63,28 @@ func (c *cloudStorageFS) Open(ctx context.Context, path string) (*File, error) {
 
 	return &File{
 		ReadCloser: f,
-		Name:       path,
-		Size:       f.Size(),
-		ModTime:    f.ModTime(),
+		Attributes: Attributes{
+			ContentType: f.ContentType(),
+			Size:        f.Size(),
+			ModTime:     f.ModTime(),
+		},
 	}, nil
 }
 
 // Create implements FS.
-func (c *cloudStorageFS) Create(ctx context.Context, path string) (io.WriteCloser, error) {
+func (c *cloudStorageFS) Create(ctx context.Context, path string, options *WriterOptions) (io.WriteCloser, error) {
 	b, err := c.blobBucketHandle(ctx, storage.DevstorageReadWriteScope)
 	if err != nil {
 		return nil, err
 	}
-	return b.NewWriter(ctx, path, nil)
+	var blobOpts *blob.WriterOptions
+	if options != nil {
+		blobOpts = &blob.WriterOptions{
+			Metadata:    options.Attributes.Metadata,
+			ContentType: options.Attributes.ContentType,
+		}
+	}
+	return b.NewWriter(ctx, path, blobOpts)
 }
 
 // Delete implements FS.
@@ -94,12 +103,9 @@ func (c *cloudStorageFS) Walk(ctx context.Context, path string, fn WalkFn) error
 		return err
 	}
 
-	it, err := bh.List(ctx, &blob.ListOptions{
+	it := bh.List(&blob.ListOptions{
 		Prefix: path,
 	})
-	if err != nil {
-		return err
-	}
 
 	for {
 		r, err := it.Next(ctx)

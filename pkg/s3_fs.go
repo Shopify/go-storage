@@ -23,13 +23,13 @@ type s3FS struct {
 }
 
 // Open implements FS.
-func (s *s3FS) Open(ctx context.Context, path string) (*File, error) {
+func (s *s3FS) Open(ctx context.Context, path string, options *ReaderOptions) (*File, error) {
 	b, err := s.bucketHandles(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	f, err := b.NewReader(ctx, path)
+	f, err := b.NewReader(ctx, path, nil)
 	if err != nil {
 		if blob.IsNotExist(err) {
 			return nil, &notExistError{
@@ -41,19 +41,27 @@ func (s *s3FS) Open(ctx context.Context, path string) (*File, error) {
 
 	return &File{
 		ReadCloser: f,
-		Name:       path,
-		Size:       f.Size(),
-		ModTime:    f.ModTime(),
+		Attributes: Attributes{
+			Size:    f.Size(),
+			ModTime: f.ModTime(),
+		},
 	}, nil
 }
 
 // Create implements FS.
-func (s *s3FS) Create(ctx context.Context, path string) (io.WriteCloser, error) {
+func (s *s3FS) Create(ctx context.Context, path string, options *WriterOptions) (io.WriteCloser, error) {
 	b, err := s.bucketHandles(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return b.NewWriter(ctx, path, nil)
+	var blobOpts *blob.WriterOptions
+	if options != nil {
+		blobOpts = &blob.WriterOptions{
+			Metadata:    options.Attributes.Metadata,
+			ContentType: options.Attributes.ContentType,
+		}
+	}
+	return b.NewWriter(ctx, path, blobOpts)
 }
 
 // Delete implements FS.
@@ -72,7 +80,7 @@ func (s *s3FS) Walk(ctx context.Context, path string, fn WalkFn) error {
 		return err
 	}
 
-	it, err := bh.List(ctx, &blob.ListOptions{
+	it := bh.List(&blob.ListOptions{
 		Prefix: path,
 	})
 	if err != nil {
