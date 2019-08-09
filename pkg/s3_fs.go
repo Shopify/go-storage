@@ -48,6 +48,25 @@ func (s *s3FS) Open(ctx context.Context, path string, options *ReaderOptions) (*
 	}, nil
 }
 
+func (s *s3FS) Attributes(ctx context.Context, path string, options *ReaderOptions) (*Attributes, error) {
+	b, err := s.bucketHandles(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	a, err := b.Attributes(ctx, path)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Attributes{
+		ContentType: a.ContentType,
+		Metadata:    a.Metadata,
+		ModTime:     a.ModTime,
+		Size:        a.Size,
+	}, nil
+}
+
 // Create implements FS.
 func (s *s3FS) Create(ctx context.Context, path string, options *WriterOptions) (io.WriteCloser, error) {
 	b, err := s.bucketHandles(ctx)

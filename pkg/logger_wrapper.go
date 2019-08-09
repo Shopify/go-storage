@@ -42,6 +42,16 @@ func (l *loggerWrapper) Open(ctx context.Context, path string, options *ReaderOp
 	return f, err
 }
 
+// Attributes implements FS.
+func (l *loggerWrapper) Attributes(ctx context.Context, path string, options *ReaderOptions) (*Attributes, error) {
+	l.printf("%v: attrs: %v", l.name, path)
+	a, err := l.fs.Attributes(ctx, path, options)
+	if err != nil {
+		l.printf("%v: attrs error: %v: %v", l.name, path, err)
+	}
+	return a, err
+}
+
 // Create implements FS.  All calls to Create are logged and errors are logged separately.
 func (l *loggerWrapper) Create(ctx context.Context, path string, options *WriterOptions) (io.WriteCloser, error) {
 	l.printf("%v: create: %v", l.name, path)

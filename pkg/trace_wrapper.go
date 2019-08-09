@@ -38,6 +38,19 @@ func (t *traceWrapper) Open(ctx context.Context, path string, options *ReaderOpt
 	return t.fs.Open(ctx, path, options)
 }
 
+// Attributes() implements FS.  All calls to Attributes() are logged via golang.org/x/net/trace.
+func (t *traceWrapper) Attributes(ctx context.Context, path string, options *ReaderOptions) (f *Attributes, err error) {
+	if tr, ok := trace.FromContext(ctx); ok {
+		tr.LazyPrintf("%v: attrs: %v", t.name, path)
+		defer func() {
+			if err != nil {
+				tr.LazyPrintf("%v: error: %v", t.name, err)
+				tr.SetError()
+			}
+		}()
+	}
+	return t.fs.Attributes(ctx, path, options)
+}
 
 // Create implements FS.  All calls to Create are logged via golang.org/x/net/trace.
 func (t *traceWrapper) Create(ctx context.Context, path string, options *WriterOptions) (wc io.WriteCloser, err error) {

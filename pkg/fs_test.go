@@ -23,6 +23,11 @@ func testOpenExists(t *testing.T, fs storage.FS, path string, content string) {
 	got := string(b)
 	assert.Equal(t, content, got)
 
+	attrs, err := fs.Attributes(ctx, path, nil)
+	assert.NoError(t, err)
+	assert.Equal(t, f.Attributes, *attrs)
+	assert.Len(t, content, int(attrs.Size))
+
 	err = f.Close()
 	assert.NoError(t, err)
 }
@@ -30,6 +35,9 @@ func testOpenExists(t *testing.T, fs storage.FS, path string, content string) {
 func testOpenNotExists(t *testing.T, fs storage.FS, path string) {
 	ctx := context.Background()
 	_, err := fs.Open(ctx, path, nil)
+	assert.Errorf(t, err, "storage %s: path does not exist", path)
+
+	_, err = fs.Attributes(ctx, path, nil)
 	assert.Errorf(t, err, "storage %s: path does not exist", path)
 }
 

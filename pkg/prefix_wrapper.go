@@ -29,6 +29,11 @@ func (p *prefixWrapper) Open(ctx context.Context, path string, options *ReaderOp
 	return p.fs.Open(ctx, p.addPrefix(path), options)
 }
 
+// Attributes() implements FS.
+func (p *prefixWrapper) Attributes(ctx context.Context, path string, options *ReaderOptions) (*Attributes, error) {
+	return p.fs.Attributes(ctx, p.addPrefix(path), options)
+}
+
 // Create implements FS.
 func (p *prefixWrapper) Create(ctx context.Context, path string, options *WriterOptions) (io.WriteCloser, error) {
 	return p.fs.Create(ctx, p.addPrefix(path), options)

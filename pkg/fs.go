@@ -54,6 +54,9 @@ type FS interface {
 	// File when done to release all underlying resources.
 	Open(ctx context.Context, path string, options *ReaderOptions) (*File, error)
 
+	// Attributes returns attributes about a path
+	Attributes(ctx context.Context, path string, options *ReaderOptions) (*Attributes, error)
+
 	// Create makes a new file at path in the filesystem.  Callers must close the
 	// returned WriteCloser and check the error to be sure that the file
 	// was successfully written.
