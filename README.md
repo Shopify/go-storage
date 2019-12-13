@@ -6,7 +6,7 @@ Forked from https://github.com/sajari/storage
 
 # Requirements
 
-- [Go 1.6+](http://golang.org/dl/)
+- [Go 1.10+](http://golang.org/dl/)
 
 # Installation
 

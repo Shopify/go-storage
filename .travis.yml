@@ -1,14 +1,9 @@
 sudo: false
 language: go
 go:
-- 1.6
-- 1.7
-- 1.8
-- 1.9
 - 1.10
 - 1.11
+- 1.12
+- 1.13
 - tip
 go_import_path: github.com/Shopify/go-storage
-notifications:
-  email:
-    - infra@sajari.com
