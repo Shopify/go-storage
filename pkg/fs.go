@@ -7,7 +7,7 @@ import (
 	"io"
 	"time"
 
-	"github.com/google/go-cloud/blob"
+	"gocloud.dev/blob"
 )
 
 // File contains the metadata required to define a file (for reading).
@@ -17,7 +17,7 @@ type File struct {
 }
 
 // Attributes represents the metadata of a File
-// Inspired from github.com/google/go-cloud/blob.Attributes
+// Inspired from gocloud.dev/blob.Attributes
 type Attributes struct {
 	// ContentType is the MIME type of the blob object. It will not be empty.
 	ContentType string
@@ -37,12 +37,12 @@ type Attributes struct {
 }
 
 // ReaderOptions are used to modify the behaviour of read operations.
-// Inspired from github.com/google/go-cloud/blob.ReaderOptions
+// Inspired from gocloud.dev/blob.ReaderOptions
 // It is provided for future extensibility.
 type ReaderOptions struct{}
 
 // WriterOptions are used to modify the behaviour of write operations.
-// Inspired from github.com/google/go-cloud/blob.WriterOptions
+// Inspired from gocloud.dev/blob.WriterOptions
 // Not all options are supported by all FS
 type WriterOptions struct {
 	Attributes Attributes
