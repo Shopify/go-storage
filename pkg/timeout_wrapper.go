@@ -35,51 +35,67 @@ type timeoutWrapper struct {
 // but does NOT modify the context being passed to the underlying call.
 // This is important, because the context needs to continue to be alive while the returned object (File, Writer, etc)
 // is being used by the caller.
-func timeoutCall(ctx context.Context, timeout time.Duration, call func() error) (err error) {
-	done := make(chan error)
+func timeoutCall(ctx context.Context, timeout time.Duration, call func() (interface{}, error)) (interface{}, error) {
+	var out interface{}
+	var err error
+	done := make(chan struct{})
 	go func() {
-		done <- call()
+		out, err = call()
+		close(done)
 	}()
 
 	select {
 	case <-time.After(timeout):
-		return context.DeadlineExceeded
+		return nil, context.DeadlineExceeded
 	case <-ctx.Done():
-		return ctx.Err()
-	case err := <-done:
-		return err
+		return nil, ctx.Err()
+	case <-done:
+		return out, err
 	}
 }
 
 // Open implements FS.
-func (t *timeoutWrapper) Open(ctx context.Context, path string, options *ReaderOptions) (file *File, err error) {
-	return file, timeoutCall(ctx, t.read, func() error {
-		file, err = t.fs.Open(ctx, path, options)
-		return err
+func (t *timeoutWrapper) Open(ctx context.Context, path string, options *ReaderOptions) (*File, error) {
+	out, err := timeoutCall(ctx, t.read, func() (interface{}, error) {
+		return t.fs.Open(ctx, path, options)
 	})
+	if file, ok := out.(*File); ok {
+		return file, err
+	} else {
+		return nil, err
+	}
 }
 
 // Attributes() implements FS.
-func (t *timeoutWrapper) Attributes(ctx context.Context, path string, options *ReaderOptions) (attrs *Attributes, err error) {
-	return attrs, timeoutCall(ctx, t.read, func() error {
-		attrs, err = t.fs.Attributes(ctx, path, options)
-		return err
+func (t *timeoutWrapper) Attributes(ctx context.Context, path string, options *ReaderOptions) (*Attributes, error) {
+	out, err := timeoutCall(ctx, t.read, func() (interface{}, error) {
+		return t.fs.Attributes(ctx, path, options)
 	})
+	if attrs, ok := out.(*Attributes); ok {
+		return attrs, err
+	} else {
+		return nil, err
+	}
 }
 
 // Create implements FS.
-func (t *timeoutWrapper) Create(ctx context.Context, path string, options *WriterOptions) (w io.WriteCloser, err error) {
-	return w, timeoutCall(ctx, t.write, func() error {
-		w, err = t.fs.Create(ctx, path, options)
-		return err
+func (t *timeoutWrapper) Create(ctx context.Context, path string, options *WriterOptions) (io.WriteCloser, error) {
+	out, err := timeoutCall(ctx, t.write, func() (interface{}, error) {
+		return t.fs.Create(ctx, path, options)
 	})
+	if w, ok := out.(io.WriteCloser); ok {
+		return w, err
+	} else {
+		return nil, err
+	}
 }
 
 // Delete implements FS.
 func (t *timeoutWrapper) Delete(ctx context.Context, path string) error {
-	return timeoutCall(ctx, t.write, func() error {
-		return t.fs.Delete(ctx, path)
+	_, err := timeoutCall(ctx, t.write, func() (interface{}, error) {
+		return nil, t.fs.Delete(ctx, path)
 	})
+	return err
 }
 
 // Walk transverses all paths underneath path, calling fn on each visited path.
@@ -87,9 +103,13 @@ func (t *timeoutWrapper) Walk(ctx context.Context, path string, fn WalkFn) error
 	return t.fs.Walk(ctx, path, fn)
 }
 
-func (t *timeoutWrapper) URL(ctx context.Context, path string, options *SignedURLOptions) (url string, err error) {
-	return url, timeoutCall(ctx, t.write, func() error {
-		url, err = t.fs.URL(ctx, path, options)
-		return err
+func (t *timeoutWrapper) URL(ctx context.Context, path string, options *SignedURLOptions) (string, error) {
+	out, err := timeoutCall(ctx, t.write, func() (interface{}, error) {
+		return t.fs.URL(ctx, path, options)
 	})
+	if url, ok := out.(string); ok {
+		return url, err
+	} else {
+		return "", err
+	}
 }
