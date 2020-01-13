@@ -2,15 +2,16 @@ package storage
 
 import (
 	"context"
+	"gocloud.dev/gcerrors"
 	"io"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/endpoints"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
-	"github.com/google/go-cloud/blob"
-	"github.com/google/go-cloud/blob/s3blob"
 	"github.com/pkg/errors"
+	"gocloud.dev/blob"
+	"gocloud.dev/blob/s3blob"
 )
 
 func NewS3FS(bucket string) FS {
@@ -31,7 +32,7 @@ func (s *s3FS) Open(ctx context.Context, path string, options *ReaderOptions) (*
 
 	f, err := b.NewReader(ctx, path, nil)
 	if err != nil {
-		if blob.IsNotExist(err) {
+		if gcerrors.Code(err) == gcerrors.NotFound {
 			return nil, &notExistError{
 				Path: path,
 			}
@@ -143,7 +144,7 @@ func (s *s3FS) bucketHandles(ctx context.Context) (*blob.Bucket, error) {
 	c := aws.NewConfig().WithRegion(region)
 	sess = sess.Copy(c)
 
-	b, err := s3blob.OpenBucket(ctx, s.bucket, sess, nil)
+	b, err := s3blob.OpenBucket(ctx, sess, s.bucket, nil)
 	if err != nil {
 		return nil, errors.Wrapf(err, "s3: could not open %q", s.bucket)
 	}

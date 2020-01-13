@@ -2,12 +2,13 @@ package storage
 
 import (
 	"context"
+	"gocloud.dev/gcerrors"
 	"io"
 
-	"github.com/google/go-cloud/blob"
-	"github.com/google/go-cloud/blob/gcsblob"
-	"github.com/google/go-cloud/gcp"
 	"github.com/pkg/errors"
+	"gocloud.dev/blob"
+	"gocloud.dev/blob/gcsblob"
+	"gocloud.dev/gcp"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/storage/v1"
 )
@@ -53,7 +54,7 @@ func (c *cloudStorageFS) Open(ctx context.Context, path string, options *ReaderO
 
 	f, err := b.NewReader(ctx, path, nil)
 	if err != nil {
-		if blob.IsNotExist(err) {
+		if gcerrors.Code(err) == gcerrors.NotFound {
 			return nil, &notExistError{
 				Path: path,
 			}
@@ -174,5 +175,5 @@ func (c *cloudStorageFS) blobBucketHandle(ctx context.Context, scope string, ext
 		}
 	}
 
-	return gcsblob.OpenBucket(ctx, c.bucket, client, options)
+	return gcsblob.OpenBucket(ctx, client, c.bucket, options)
 }
