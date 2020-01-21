@@ -17,6 +17,7 @@ func Read(ctx context.Context, fs FS, path string, options *ReaderOptions) ([]by
 
 	var data []byte
 	if data, err = ioutil.ReadAll(file); err != nil {
+		_ = file.Close() // Best effort at cleaning up
 		return nil, fmt.Errorf("unable to read %s: %w", path, err)
 	}
 
@@ -36,6 +37,7 @@ func Write(ctx context.Context, fs FS, path string, data []byte, options *Writer
 	}
 
 	if _, err = w.Write(data); err != nil {
+		_ = w.Close() // Best effort at cleaning up
 		return fmt.Errorf("unable to write %s: %w", path, err)
 	}
 
