@@ -7,12 +7,15 @@ import (
 	"io/ioutil"
 )
 
-func Read(ctx context.Context, fs FS, path string, options *ReaderOptions) (data []byte, err error) {
+func Read(ctx context.Context, fs FS, path string, options *ReaderOptions) ([]byte, error) {
 	var file *File
+	var err error
+
 	if file, err = fs.Open(ctx, path, options); err != nil {
 		return nil, fmt.Errorf("unable to open %s: %w", path, err)
 	}
 
+	var data []byte
 	if data, err = ioutil.ReadAll(file); err != nil {
 		return nil, fmt.Errorf("unable to read %s: %w", path, err)
 	}
@@ -24,8 +27,10 @@ func Read(ctx context.Context, fs FS, path string, options *ReaderOptions) (data
 	return data, nil
 }
 
-func Write(ctx context.Context, fs FS, path string, data []byte, options *WriterOptions) (err error) {
+func Write(ctx context.Context, fs FS, path string, data []byte, options *WriterOptions) error {
 	var w io.WriteCloser
+	var err error
+
 	if w, err = fs.Create(ctx, path, options); err != nil {
 		return fmt.Errorf("unable to create %s: %w", path, err)
 	}
