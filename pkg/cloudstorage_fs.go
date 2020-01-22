@@ -13,6 +13,8 @@ import (
 	"google.golang.org/api/storage/v1"
 )
 
+var ErrCredentialsMissing = errors.New("credentials missing")
+
 // NewCloudStorageFS creates a Google Cloud Storage FS
 // credentials can be nil to use the default GOOGLE_APPLICATION_CREDENTIALS
 func NewCloudStorageFS(bucket string, credentials *google.Credentials) FS {
@@ -31,7 +33,7 @@ type cloudStorageFS struct {
 }
 
 func (c *cloudStorageFS) URL(ctx context.Context, path string, options *SignedURLOptions) (string, error) {
-	b, err := c.blobBucketHandle(ctx, storage.DevstorageReadOnlyScope)
+	b, err := c.bucketHandleForSigning(ctx, storage.DevstorageReadOnlyScope)
 	if err != nil {
 		return "", err
 	}
@@ -47,7 +49,7 @@ func (c *cloudStorageFS) URL(ctx context.Context, path string, options *SignedUR
 
 // Open implements FS.
 func (c *cloudStorageFS) Open(ctx context.Context, path string, options *ReaderOptions) (*File, error) {
-	b, err := c.blobBucketHandle(ctx, storage.DevstorageReadOnlyScope)
+	b, err := c.bucketHandle(ctx, storage.DevstorageReadOnlyScope)
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +76,7 @@ func (c *cloudStorageFS) Open(ctx context.Context, path string, options *ReaderO
 
 // Attributes implements FS.
 func (c *cloudStorageFS) Attributes(ctx context.Context, path string, options *ReaderOptions) (*Attributes, error) {
-	b, err := c.blobBucketHandle(ctx, storage.DevstorageReadOnlyScope)
+	b, err := c.bucketHandle(ctx, storage.DevstorageReadOnlyScope)
 	if err != nil {
 		return nil, err
 	}
@@ -94,7 +96,7 @@ func (c *cloudStorageFS) Attributes(ctx context.Context, path string, options *R
 
 // Create implements FS.
 func (c *cloudStorageFS) Create(ctx context.Context, path string, options *WriterOptions) (io.WriteCloser, error) {
-	b, err := c.blobBucketHandle(ctx, storage.DevstorageReadWriteScope)
+	b, err := c.bucketHandle(ctx, storage.DevstorageReadWriteScope)
 	if err != nil {
 		return nil, err
 	}
@@ -110,7 +112,7 @@ func (c *cloudStorageFS) Create(ctx context.Context, path string, options *Write
 
 // Delete implements FS.
 func (c *cloudStorageFS) Delete(ctx context.Context, path string) error {
-	b, err := c.blobBucketHandle(ctx, storage.DevstorageFullControlScope)
+	b, err := c.bucketHandle(ctx, storage.DevstorageFullControlScope)
 	if err != nil {
 		return err
 	}
@@ -119,7 +121,7 @@ func (c *cloudStorageFS) Delete(ctx context.Context, path string) error {
 
 // Walk implements FS.
 func (c *cloudStorageFS) Walk(ctx context.Context, path string, fn WalkFn) error {
-	bh, err := c.blobBucketHandle(ctx, storage.DevstorageReadOnlyScope)
+	bh, err := c.bucketHandle(ctx, storage.DevstorageReadOnlyScope)
 	if err != nil {
 		return err
 	}
@@ -152,27 +154,46 @@ func (c *cloudStorageFS) findCredentials(ctx context.Context, scope string, extr
 	return google.FindDefaultCredentials(ctx, append(extraScopes, scope)...)
 }
 
-func (c *cloudStorageFS) blobBucketHandle(ctx context.Context, scope string, extraScopes ...string) (*blob.Bucket, error) {
+func (c *cloudStorageFS) client(ctx context.Context, scope string, extraScopes ...string) (*gcp.HTTPClient, *google.Credentials, error) {
 	creds, err := c.findCredentials(ctx, scope, extraScopes...)
 	if err != nil {
-		return nil, errors.Wrap(err, "cloud storage: unable to retrieve default token source")
+		return nil, nil, errors.Wrap(err, "cloud storage: unable to retrieve default token source")
 	}
 
 	client, err := gcp.NewHTTPClient(gcp.DefaultTransport(), gcp.CredentialsTokenSource(creds))
 	if err != nil {
+		return nil, nil, errors.Wrap(err, "cloud storage: unable to build http client")
+	}
+
+	return client, creds, nil
+}
+
+func (c *cloudStorageFS) bucketHandle(ctx context.Context, scope string, extraScopes ...string) (*blob.Bucket, error) {
+	client, _, err := c.client(ctx, scope, extraScopes...)
+	if err != nil {
 		return nil, err
 	}
 
-	var options *gcsblob.Options
-	if creds != nil {
-		config, err := google.JWTConfigFromJSON(creds.JSON, append(extraScopes, scope)...)
-		if err != nil {
-			return nil, errors.Wrap(err, "cloud storage: parse credentials")
-		}
-		options = &gcsblob.Options{
-			PrivateKey:     config.PrivateKey,
-			GoogleAccessID: config.Email,
-		}
+	return gcsblob.OpenBucket(ctx, client, c.bucket, nil)
+}
+
+func (c *cloudStorageFS) bucketHandleForSigning(ctx context.Context, scope string, extraScopes ...string) (*blob.Bucket, error) {
+	client, creds, err := c.client(ctx, scope, extraScopes...)
+	if err != nil {
+		return nil, err
+	}
+
+	if creds == nil {
+		return nil, ErrCredentialsMissing
+	}
+
+	config, err := google.JWTConfigFromJSON(creds.JSON, append(extraScopes, scope)...)
+	if err != nil {
+		return nil, errors.Wrap(err, "cloud storage: parse credentials")
+	}
+	options := &gcsblob.Options{
+		PrivateKey:     config.PrivateKey,
+		GoogleAccessID: config.Email,
 	}
 
 	return gcsblob.OpenBucket(ctx, client, c.bucket, options)
