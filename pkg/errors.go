@@ -16,8 +16,11 @@ type isNotExister interface {
 // IsNotExist returns a boolean indicating whether the error is known to report that
 // a path does not exist.
 func IsNotExist(err error) bool {
-	e, ok := err.(isNotExister)
-	return ok && e.isNotExist()
+	var e isNotExister
+	if err != nil && errors.As(err, &e) {
+		return e.isNotExist()
+	}
+	return false
 }
 
 // notExistError is returned from FS.Open implementations when a requested
