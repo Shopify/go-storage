@@ -46,6 +46,18 @@ type ReaderOptions struct{}
 // Not all options are supported by all FS
 type WriterOptions struct {
 	Attributes Attributes
+
+	// BufferSize changes the default size in bytes of the chunks that
+	// Writer will upload in a single request; larger blobs will be split into
+	// multiple requests.
+	//
+	// This option may be ignored by some drivers.
+	//
+	// If 0, the driver will choose a reasonable default.
+	//
+	// If the Writer is used to do many small writes concurrently, using a
+	// smaller BufferSize may reduce memory usage.
+	BufferSize int
 }
 
 // FS is an interface which defines a virtual filesystem.
