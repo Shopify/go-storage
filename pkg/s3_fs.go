@@ -79,6 +79,7 @@ func (s *s3FS) Create(ctx context.Context, path string, options *WriterOptions) 
 		blobOpts = &blob.WriterOptions{
 			Metadata:    options.Attributes.Metadata,
 			ContentType: options.Attributes.ContentType,
+			BufferSize:  options.BufferSize,
 		}
 	}
 	return b.NewWriter(ctx, path, blobOpts)
