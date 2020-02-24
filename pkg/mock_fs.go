@@ -26,6 +26,9 @@ func (m *mockFS) Open(ctx context.Context, path string, options *ReaderOptions) 
 	args := m.Called(ctx, path, options)
 	file := args.Get(0)
 	err := args.Error(1)
+	if file == nil {
+		return nil, err
+	}
 	return file.(*File), err
 }
 
@@ -33,6 +36,9 @@ func (m *mockFS) Attributes(ctx context.Context, path string, options *ReaderOpt
 	args := m.Called(ctx, path, options)
 	attrs := args.Get(0)
 	err := args.Error(1)
+	if attrs == nil {
+		return nil, err
+	}
 	return attrs.(*Attributes), err
 }
 
