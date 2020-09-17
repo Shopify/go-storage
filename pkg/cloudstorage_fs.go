@@ -2,12 +2,14 @@ package storage
 
 import (
 	"context"
-	"gocloud.dev/gcerrors"
 	"io"
+	"strings"
+	"sync"
 
 	"github.com/pkg/errors"
 	"gocloud.dev/blob"
 	"gocloud.dev/blob/gcsblob"
+	"gocloud.dev/gcerrors"
 	"gocloud.dev/gcp"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/storage/v1"
@@ -28,8 +30,9 @@ func NewCloudStorageFS(bucket string, credentials *google.Credentials) FS {
 // file storage.
 type cloudStorageFS struct {
 	// bucket is the name of the bucket to use as the underlying storage.
-	bucket      string
-	credentials *google.Credentials
+	bucket            string
+	credentials       *google.Credentials
+	cachedCredentials sync.Map
 }
 
 func (c *cloudStorageFS) URL(ctx context.Context, path string, options *SignedURLOptions) (string, error) {
@@ -152,7 +155,22 @@ func (c *cloudStorageFS) findCredentials(ctx context.Context, scope string, extr
 	if c.credentials != nil {
 		return c.credentials, nil
 	}
-	return google.FindDefaultCredentials(ctx, append(extraScopes, scope)...)
+
+	scopes := append(extraScopes, scope)
+	cacheKey := strings.Join(scopes, "|") // slices are not serializable
+
+	// Short-circuit if already present
+	if credentials, ok := c.cachedCredentials.Load(cacheKey); ok {
+		return credentials.(*google.Credentials), nil
+	}
+
+	credentials, err := google.FindDefaultCredentials(ctx, scopes...)
+	if err != nil {
+		return nil, err
+	}
+
+	storedCredentials, _ := c.cachedCredentials.LoadOrStore(cacheKey, credentials)
+	return storedCredentials.(*google.Credentials), nil
 }
 
 func (c *cloudStorageFS) client(ctx context.Context, scope string, extraScopes ...string) (*gcp.HTTPClient, *google.Credentials, error) {
@@ -161,7 +179,7 @@ func (c *cloudStorageFS) client(ctx context.Context, scope string, extraScopes .
 		return nil, nil, errors.Wrap(err, "cloud storage: unable to retrieve default token source")
 	}
 
-	client, err := gcp.NewHTTPClient(gcp.DefaultTransport(), gcp.CredentialsTokenSource(creds))
+	client, err := gcp.NewHTTPClient(gcp.DefaultTransport(), creds.TokenSource)
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "cloud storage: unable to build http client")
 	}
