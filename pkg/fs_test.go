@@ -68,7 +68,7 @@ func testDelete(t *testing.T, fs storage.FS, path string) {
 	testOpenNotExists(t, fs, path)
 }
 
-func testRemoveAll(t *testing.T, fs storage.FS) {
+func testRemoveAll(t testing.TB, fs storage.FS) {
 	err := fs.Walk(context.Background(), "", func(path string) error {
 		return fs.Delete(context.Background(), path)
 	})
