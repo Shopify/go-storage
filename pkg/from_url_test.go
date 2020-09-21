@@ -10,7 +10,7 @@ func TestFromURL(t *testing.T) {
 	cs := FromURL("gs://foo/bar")
 	assert.Implements(t, (*FS)(nil), cs)
 	assert.IsType(t, (*cloudStorageFS)(nil), cs)
-	assert.Equal(t, "foo/bar", cs.(*cloudStorageFS).bucket)
+	assert.Equal(t, "foo/bar", cs.(*cloudStorageFS).bucketName)
 
 	s3 := FromURL("s3://foo/bar")
 	assert.Implements(t, (*FS)(nil), s3)
