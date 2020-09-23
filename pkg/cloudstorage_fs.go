@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"sync"
 
 	"github.com/pkg/errors"
 	"gocloud.dev/blob"
@@ -20,7 +21,7 @@ var ErrCredentialsMissing = errors.New("credentials missing")
 // credentials can be nil to use the default GOOGLE_APPLICATION_CREDENTIALS
 func NewCloudStorageFS(bucket string, credentials *google.Credentials) FS {
 	return &cloudStorageFS{
-		bucket:      bucket,
+		bucketName:  bucket,
 		credentials: credentials,
 	}
 }
@@ -28,9 +29,11 @@ func NewCloudStorageFS(bucket string, credentials *google.Credentials) FS {
 // cloudStorageFS implements FS and uses Google Cloud Storage as the underlying
 // file storage.
 type cloudStorageFS struct {
-	// bucket is the name of the bucket to use as the underlying storage.
-	bucket      string
-	credentials *google.Credentials
+	l            sync.RWMutex
+	bucket       *blob.Bucket
+	bucketName   string
+	bucketScopes Scope
+	credentials  *google.Credentials
 }
 
 func (c *cloudStorageFS) URL(ctx context.Context, path string, options *SignedURLOptions) (string, error) {
@@ -162,6 +165,19 @@ func cloudStorageScope(scope Scope) string {
 	}
 }
 
+func ResolveCloudStorageScope(scope Scope) Scope {
+	switch cloudStorageScope(scope) {
+	case storage.DevstorageFullControlScope:
+		return ScopeRWD | scope
+	case storage.DevstorageReadWriteScope:
+		return ScopeRW | scope
+	case storage.DevstorageReadOnlyScope:
+		return ScopeRead | scope
+	default:
+		panic(fmt.Sprintf("unknown scope: '%s'", scope))
+	}
+}
+
 func (c *cloudStorageFS) findCredentials(ctx context.Context, scope Scope) (*google.Credentials, error) {
 	if c.credentials != nil {
 		return c.credentials, nil
@@ -202,7 +218,7 @@ func (c *cloudStorageFS) bucketOptions(creds *google.Credentials, scope Scope) (
 	}, nil
 }
 
-func (c *cloudStorageFS) bucketHandle(ctx context.Context, scope Scope) (*blob.Bucket, error) {
+func (c *cloudStorageFS) openBucket(ctx context.Context, scope Scope) (*blob.Bucket, error) {
 	client, creds, err := c.client(ctx, scope)
 	if err != nil {
 		return nil, err
@@ -213,5 +229,35 @@ func (c *cloudStorageFS) bucketHandle(ctx context.Context, scope Scope) (*blob.B
 		return nil, err
 	}
 
-	return gcsblob.OpenBucket(ctx, client, c.bucket, options)
+	return gcsblob.OpenBucket(ctx, client, c.bucketName, options)
+}
+
+func (c *cloudStorageFS) bucketHandle(ctx context.Context, scope Scope) (*blob.Bucket, error) {
+	c.l.RLock()
+	scope |= c.bucketScopes // Expand requested scope to encompass existing scopes
+	if bucket := c.bucket; bucket != nil && c.bucketScopes.Has(scope) {
+		c.l.RUnlock()
+		return bucket, nil
+	}
+	c.l.RUnlock()
+
+	c.l.Lock()
+	defer c.l.Unlock()
+	if c.bucket != nil && c.bucketScopes.Has(scope) { // Race condition
+		return c.bucket, nil
+	}
+
+	// Expand the requested scope to include the scopes that GCS would provide
+	// e.g. Requesting Write actually provides ReadWrite.
+	// Also include any scope that was previously used.
+	scope = ResolveCloudStorageScope(c.bucketScopes | scope)
+
+	bucket, err := c.openBucket(ctx, scope)
+	if err != nil {
+		return nil, err
+	}
+
+	c.bucket = bucket
+	c.bucketScopes = scope
+	return bucket, nil
 }

@@ -137,3 +137,17 @@ func withCloudStorageFS(t testing.TB, cb func(fs storage.FS)) {
 
 	cb(fs)
 }
+
+func Test_ResolveCloudStorageScope(t *testing.T) {
+	tests := map[storage.Scope]storage.Scope{
+		storage.ScopeRead:                         storage.ScopeRead,
+		storage.ScopeWrite:                        storage.ScopeRW,
+		storage.ScopeDelete:                       storage.ScopeRWD,
+		storage.ScopeWrite | storage.ScopeSignURL: storage.ScopeRW | storage.ScopeSignURL,
+	}
+	for input, output := range tests {
+		t.Run(input.String(), func(t *testing.T) {
+			require.Equal(t, output, storage.ResolveCloudStorageScope(input))
+		})
+	}
+}
