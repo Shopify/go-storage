@@ -13,7 +13,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/Shopify/go-storage/pkg"
+	"github.com/Shopify/go-storage"
 )
 
 func BenchmarkCloudStorageFS(b *testing.B) {

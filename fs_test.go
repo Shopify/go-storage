@@ -8,7 +8,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/Shopify/go-storage/pkg"
+	"github.com/Shopify/go-storage"
 )
 
 func testOpenExists(t *testing.T, fs storage.FS, path string, content string) {

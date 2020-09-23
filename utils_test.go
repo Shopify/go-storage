@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/Shopify/go-storage/pkg"
+	"github.com/Shopify/go-storage"
 )
 
 func TestExists(t *testing.T) {
