@@ -7,7 +7,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/Shopify/go-storage/pkg"
+	"github.com/Shopify/go-storage"
 )
 
 func Test_mockFS_Attributes(t *testing.T) {

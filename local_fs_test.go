@@ -5,7 +5,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/Shopify/go-storage/pkg"
+	"github.com/Shopify/go-storage"
 )
 
 func withLocal(cb func(storage.FS)) {
