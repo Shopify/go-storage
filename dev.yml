@@ -4,10 +4,6 @@ up:
   - go:
       version: "1.13.5"
       modules: true
-      tools:
-        - github.com/alecthomas/gometalinter
-        # gosumcheck is not installed by gometalinter
-        - github.com/haya14busa/gosum/cmd/gosumcheck
   - custom:
         name: Load dependencies
         met?: go mod tidy
@@ -17,6 +13,6 @@ commands:
   test: go test -race ./...
   style:
     run: bin/style
-    desc: Static verification using gometalinter or autofix issues when possible.
+    desc: Static verification using golangci or autofix issues when possible.
     syntax:
       optional: --fix
