@@ -9,7 +9,7 @@ import (
 
 // NewMockFS creates an FS where each method can be mocked.
 // To be used in tests.
-func NewMockFS() *mockFS {
+func NewMockFS() *mockFS { // nolint:golint
 	return &mockFS{}
 }
 
