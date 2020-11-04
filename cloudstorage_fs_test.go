@@ -84,6 +84,7 @@ func Test_cloudStorageFS_URL(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, resp.StatusCode, http.StatusOK)
 
+		defer resp.Body.Close()
 		data, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
 		require.Equal(t, contents, string(data))
