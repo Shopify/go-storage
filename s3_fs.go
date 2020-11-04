@@ -2,7 +2,6 @@ package storage
 
 import (
 	"context"
-	"gocloud.dev/gcerrors"
 	"io"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -12,6 +11,7 @@ import (
 	"github.com/pkg/errors"
 	"gocloud.dev/blob"
 	"gocloud.dev/blob/s3blob"
+	"gocloud.dev/gcerrors"
 )
 
 func NewS3FS(bucket string) FS {
