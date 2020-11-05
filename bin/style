@@ -1,80 +1,62 @@
-#!/bin/bash
+#!/usr/bin/env ruby
 
-if [[ ! -f Gopkg.toml ]]; then
-  echo "$0 should be run from the root of a Go project" >&2
-  exit 1
-fi
+require 'fileutils'
+require 'open3'
+require 'open-uri'
 
-# Not all projects have a "cmd" folder
-source_folders=($(find ./{cmd,pkg} -maxdepth 0 -type d 2>/dev/null))
+class Style
+  class << self
+    INSTALLER_URL = 'https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh'
+    EXECUTABLE = 'golangci-lint'
+    VERSION = '1.32.0'
+    VERSION_TAG = "v#{VERSION}"
 
-# Autofix
-if [[ "$1" == "--fix" ]]; then
-  files=($(find "${source_folders[@]}" -type f -name '*.go' -not -name '*_mock.go' -not -name '*.pb.go'))
+    def call
+      install unless up_to_date?
+      run(*ARGV)
+    end
 
-  if [[ -z "${files}" ]]; then
-    echo "Could not find any file to lint" >&2
-    exit
-  fi
+    private
 
-  msg="Linting ${#files[@]} files in ${source_folders[@]}"
+    def install_path
+      gopath = ENV.fetch('GOPATH', ENV.fetch('HOME')).split(':').first
+      File.join(gopath, 'bin')
+    end
 
-  # Detect current package to put those imports after 3rd-party packages
-  local_pkg=""
-  if [[ -n "${GOPATH}" && -d "${GOPATH}/src" && "${PWD}" == "${GOPATH}/src"/* ]]; then
-    local_pkg="-local ${PWD/$GOPATH\/src\//}"
-    msg="${msg} with ${local_pkg}"
-  fi
+    def bin_path
+      File.join(install_path, EXECUTABLE)
+    end
 
-  echo "${msg}"
-  goimports -w $local_pkg "${files[@]}" \
-    && gofmt -w -s "${files[@]}"
-  exit $?
-fi
+    def exist?
+      File.executable?(bin_path)
+    end
 
-# Full lint
-packages=($(echo "${source_folders[@]}" | sed 's/$/\/.../'))
-GOMETALINTER_CONFIG="${GOMETALINTER_CONFIG:-.gometalinter.json}"
+    def up_to_date?
+      return false unless exist?
+      out, stat = Open3.capture2(bin_path, '--version')
+      raise("Unable to check version of #{bin_path}") unless stat.success?
+      out.match(/\b#{VERSION}\b/)
+    end
 
-# Inspired from:
-# https://github.com/Shopify/reportify/blob/master/script/lint
+    def install
+      puts "Installing #{EXECUTABLE}..."
 
-echo "Installing Linters..."
-gometalinter --install >/dev/null
+      open(INSTALLER_URL) do |installer|
+        Open3.popen2('sh', '-s', '--', '-b', install_path, VERSION_TAG) do |stdin, out, stat|
+          IO.copy_stream(installer, stdin)
+          stdin.close
+          print out.read
 
-echo "Running gometalinter..."
+          raise("failed to install #{EXECUTABLE} #{VERSION_TAG}") unless stat.value.success?
+        end
+      end
+    end
 
-if [[ -n "${JSON_PATH}${ANNOTATIONS_PATH}${CHECKSTYLE_PATH}${JUNIT_PATH}" ]]; then
-  json="$(mktemp)"
-  gometalinter --config "${GOMETALINTER_CONFIG}" -t --json "$@" "${packages[@]}" > "${json}"
-  status=$?
+    def run(*argv)
+      config = ENV.fetch('GOLANGCI_CONFIG', '.golangci.yml')
+      exec(bin_path, 'run', '--config', config, *argv)
+    end
+  end
+end
 
-  if [[ -n "${JSON_PATH}" ]]; then
-    cat "${json}" > "${JSON_PATH}"
-  fi
-
-  if [[ -n "${ANNOTATIONS_PATH}" ]]; then
-    cat "${json}" | bin/gometalinter2annotations > "${ANNOTATIONS_PATH}"
-  fi
-
-  if [[ -n "${CHECKSTYLE_PATH}${JUNIT_PATH}" ]]; then
-    checkstyle="$(mktemp)"
-    cat "${json}" | bin/gometalinter2checkstyle > "${checkstyle}"
-
-    if [[ -n "${CHECKSTYLE_PATH}" ]]; then
-      cat "${checkstyle}" > "${CHECKSTYLE_PATH}"
-    fi
-
-    if [[ -n "${JUNIT_PATH}" ]]; then
-      cat "${checkstyle}" | bin/checkstyle2junit > "${JUNIT_PATH}"
-    fi
-
-    rm "${checkstyle}"
-  fi
-
-  rm "${json}"
-  exit $status
-else
-  gometalinter --config "${GOMETALINTER_CONFIG}" -t "$@" "${packages[@]}"
-  exit $?
-fi
+__FILE__ == $PROGRAM_NAME and Style.call

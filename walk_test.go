@@ -69,8 +69,10 @@ func withTestTree(t *testing.T, cb func(dir string)) {
 	assert.NoError(t, err)
 	defer os.RemoveAll(dir)
 
-	os.Mkdir(filepath.Join(dir, "foo"), 0755)
-	os.Create(filepath.Join(dir, "foo", "bar"))
-	os.Create(filepath.Join(dir, "baz"))
+	assert.NoError(t, os.Mkdir(filepath.Join(dir, "foo"), 0755))
+	_, err = os.Create(filepath.Join(dir, "foo", "bar"))
+	assert.NoError(t, err)
+	_, err = os.Create(filepath.Join(dir, "baz"))
+	assert.NoError(t, err)
 	cb(dir)
 }

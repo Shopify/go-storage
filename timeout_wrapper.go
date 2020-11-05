@@ -61,9 +61,8 @@ func (t *timeoutWrapper) Open(ctx context.Context, path string, options *ReaderO
 	})
 	if file, ok := out.(*File); ok {
 		return file, err
-	} else {
-		return nil, err
 	}
+	return nil, err
 }
 
 // Attributes() implements FS.
@@ -73,9 +72,8 @@ func (t *timeoutWrapper) Attributes(ctx context.Context, path string, options *R
 	})
 	if attrs, ok := out.(*Attributes); ok {
 		return attrs, err
-	} else {
-		return nil, err
 	}
+	return nil, err
 }
 
 // Create implements FS.
@@ -85,9 +83,8 @@ func (t *timeoutWrapper) Create(ctx context.Context, path string, options *Write
 	})
 	if w, ok := out.(io.WriteCloser); ok {
 		return w, err
-	} else {
-		return nil, err
 	}
+	return nil, err
 }
 
 // Delete implements FS.
@@ -109,7 +106,6 @@ func (t *timeoutWrapper) URL(ctx context.Context, path string, options *SignedUR
 	})
 	if url, ok := out.(string); ok {
 		return url, err
-	} else {
-		return "", err
 	}
+	return "", err
 }

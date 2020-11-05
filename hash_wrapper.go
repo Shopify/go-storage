@@ -70,8 +70,7 @@ func (w *hashWriteCloser) Write(b []byte) (int, error) {
 	if err != nil {
 		return n, err
 	}
-	w.hfs.h.Write(b) // never returns an error
-	return n, nil
+	return w.hfs.h.Write(b) // never returns an error
 }
 
 func (w *hashWriteCloser) Close() (err error) {

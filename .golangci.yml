@@ -1,0 +1,36 @@
+linters-settings:
+  goimports:
+    # put imports beginning with prefix after 3rd-party packages;
+    # it's a comma-separated list of prefixes
+    local-prefixes: github.com/Shopify/go-storage
+
+  gocritic:
+    # Which checks should be enabled; can't be combined with 'disabled-checks';
+    # See https://go-critic.github.io/overview#checks-overview
+    # To check which checks are enabled run `GL_DEBUG=gocritic golangci-lint run`
+    # By default list of stable checks is used.
+    # enabled-checks:
+    #   - rangeValCopy
+    # Which checks should be disabled; can't be combined with 'enabled-checks'; default is empty
+    disabled-checks:
+      - ifElseChain
+      - elseif
+
+linters:
+  enable:
+    - bodyclose
+    - deadcode
+    - errcheck
+    - goimports
+    - golint
+    - gosimple
+    - govet
+    - ineffassign
+    - sqlclosecheck
+    - staticcheck
+    - structcheck
+    - typecheck
+    - unconvert
+    - unused
+    - varcheck
+    - gocritic
