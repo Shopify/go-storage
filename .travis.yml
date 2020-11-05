@@ -1,6 +1,0 @@
-sudo: false
-language: go
-go:
-- 1.13
-- tip
-go_import_path: github.com/Shopify/go-storage
