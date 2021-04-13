@@ -1,7 +1,3 @@
-# https://services.shopify.io/services/go-storage/production
-org_line: Production Engineering
-owners:
-- Shopify/dev-infra
 slack_channels:
 - dev-infrastructure
 security:
