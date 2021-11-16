@@ -21,6 +21,8 @@ type File struct {
 type Attributes struct {
 	// ContentType is the MIME type of the blob object. It will not be empty.
 	ContentType string
+	// ContentEncoding specifies the encoding used for the blob's content, if any.
+	ContentEncoding string
 	// Metadata holds key/value pairs associated with the blob.
 	// Keys are guaranteed to be in lowercase, even if the backend provider
 	// has case-sensitive keys (although note that Metadata written via

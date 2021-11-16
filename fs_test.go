@@ -28,6 +28,7 @@ func testOpenExists(t *testing.T, fs storage.FS, path string, content string) {
 	assert.Equal(t, f.Attributes.Metadata, attrs.Metadata)
 	assert.Equal(t, f.Attributes.Size, attrs.Size)
 	assert.Equal(t, f.Attributes.ContentType, attrs.ContentType)
+	assert.Equal(t, f.Attributes.ContentEncoding, attrs.ContentEncoding)
 
 	err = f.Close()
 	assert.NoError(t, err)
