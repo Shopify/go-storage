@@ -20,6 +20,7 @@ func IsNotExist(err error) bool {
 	if err != nil && errors.As(err, &e) {
 		return e.isNotExist()
 	}
+
 	return false
 }
 

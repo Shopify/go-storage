@@ -49,6 +49,7 @@ func (f *openForwarder) open() error {
 		return err
 	}
 	f.rc = rc
+
 	return nil
 }
 
@@ -56,6 +57,7 @@ func (f *openForwarder) Read(p []byte) (n int, err error) {
 	if err = f.open(); err != nil {
 		return 0, err
 	}
+
 	return f.rc.Read(p)
 }
 
@@ -63,6 +65,7 @@ func (f *openForwarder) Close() (err error) {
 	if f.rc == nil {
 		return nil
 	}
+
 	return f.rc.Close()
 }
 
@@ -103,6 +106,7 @@ func (c *cacheWrapper) openCache(ctx context.Context, path string, options *Read
 			},
 		}
 	}
+
 	return f, nil
 }
 
@@ -135,6 +139,7 @@ func (c *cacheWrapper) Open(ctx context.Context, path string, options *ReaderOpt
 	if !c.options.NoData {
 		if _, err := io.Copy(wc, sf); err != nil {
 			wc.Close()
+
 			return nil, err
 		}
 	}
@@ -147,6 +152,7 @@ func (c *cacheWrapper) Open(ctx context.Context, path string, options *ReaderOpt
 	if err != nil {
 		return nil, err
 	}
+
 	return ff, nil
 }
 
@@ -156,6 +162,7 @@ func (c *cacheWrapper) Attributes(ctx context.Context, path string, options *Rea
 	if err != nil {
 		return nil, err
 	}
+
 	return &f.Attributes, nil
 }
 
@@ -165,6 +172,7 @@ func (c *cacheWrapper) Delete(ctx context.Context, path string) error {
 	if err != nil && !IsNotExist(err) {
 		return err
 	}
+
 	return c.src.Delete(ctx, path)
 }
 
@@ -174,6 +182,7 @@ func (c *cacheWrapper) Create(ctx context.Context, path string, options *WriterO
 	if err != nil && !IsNotExist(err) {
 		return nil, err
 	}
+
 	return c.src.Create(ctx, path, options)
 }
 

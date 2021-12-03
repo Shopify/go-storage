@@ -39,6 +39,7 @@ func (l *loggerWrapper) Open(ctx context.Context, path string, options *ReaderOp
 	if err != nil {
 		l.printf("%v: open error: %v: %v", l.name, path, err)
 	}
+
 	return f, err
 }
 
@@ -49,6 +50,7 @@ func (l *loggerWrapper) Attributes(ctx context.Context, path string, options *Re
 	if err != nil {
 		l.printf("%v: attrs error: %v: %v", l.name, path, err)
 	}
+
 	return a, err
 }
 
@@ -59,6 +61,7 @@ func (l *loggerWrapper) Create(ctx context.Context, path string, options *Writer
 	if err != nil {
 		l.printf("%v: create error: %v: %v", l.name, path, err)
 	}
+
 	return wc, err
 }
 
@@ -69,6 +72,7 @@ func (l *loggerWrapper) Delete(ctx context.Context, path string) error {
 	if err != nil {
 		l.printf("%v: delete error: %v: %v", l.name, path, err)
 	}
+
 	return err
 }
 
@@ -83,6 +87,6 @@ func (l *loggerWrapper) URL(ctx context.Context, path string, options *SignedURL
 	if err != nil {
 		l.printf("%v: URL error: %v: %v", l.name, path, err)
 	}
-	return url, err
 
+	return url, err
 }

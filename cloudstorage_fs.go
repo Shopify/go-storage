@@ -65,6 +65,7 @@ func (c *cloudStorageFS) Open(ctx context.Context, path string, options *ReaderO
 				Path: path,
 			}
 		}
+
 		return nil, err
 	}
 
@@ -105,6 +106,7 @@ func (c *cloudStorageFS) Create(ctx context.Context, path string, options *Write
 	if err != nil {
 		return nil, err
 	}
+
 	var blobOpts *blob.WriterOptions
 	if options != nil {
 		blobOpts = &blob.WriterOptions{
@@ -114,6 +116,7 @@ func (c *cloudStorageFS) Create(ctx context.Context, path string, options *Write
 			BufferSize:      options.BufferSize,
 		}
 	}
+
 	return b.NewWriter(ctx, path, blobOpts)
 }
 
@@ -123,6 +126,7 @@ func (c *cloudStorageFS) Delete(ctx context.Context, path string) error {
 	if err != nil {
 		return err
 	}
+
 	return b.Delete(ctx, path)
 }
 
@@ -139,7 +143,7 @@ func (c *cloudStorageFS) Walk(ctx context.Context, path string, fn WalkFn) error
 
 	for {
 		r, err := it.Next(ctx)
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			break
 		}
 		if err != nil {
@@ -151,6 +155,7 @@ func (c *cloudStorageFS) Walk(ctx context.Context, path string, fn WalkFn) error
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -184,6 +189,7 @@ func (c *cloudStorageFS) findCredentials(ctx context.Context, scope Scope) (*goo
 	if c.credentials != nil {
 		return c.credentials, nil
 	}
+
 	return google.FindDefaultCredentials(ctx, cloudStorageScope(scope))
 }
 
@@ -214,6 +220,7 @@ func (c *cloudStorageFS) bucketOptions(creds *google.Credentials, scope Scope) (
 	if err != nil {
 		return nil, errors.Wrap(err, "cloud storage: parse credentials")
 	}
+
 	return &gcsblob.Options{
 		PrivateKey:     config.PrivateKey,
 		GoogleAccessID: config.Email,
@@ -239,6 +246,7 @@ func (c *cloudStorageFS) bucketHandle(ctx context.Context, scope Scope) (*blob.B
 	scope |= c.bucketScopes // Expand requested scope to encompass existing scopes
 	if bucket := c.bucket; bucket != nil && c.bucketScopes.Has(scope) {
 		c.l.RUnlock()
+
 		return bucket, nil
 	}
 	c.l.RUnlock()
@@ -261,5 +269,6 @@ func (c *cloudStorageFS) bucketHandle(ctx context.Context, scope Scope) (*blob.B
 
 	c.bucket = bucket
 	c.bucketScopes = scope
+
 	return bucket, nil
 }

@@ -53,6 +53,7 @@ func TestWalkN(t *testing.T) {
 		// 5 workers for 2 items
 		err := WalkN(ctx, fs, "", 5, func(path string) error {
 			c <- path
+
 			return nil
 		})
 		close(c)
@@ -65,11 +66,13 @@ func TestWalkN(t *testing.T) {
 }
 
 func withTestTree(t *testing.T, cb func(dir string)) {
+	t.Helper()
+
 	dir, err := ioutil.TempDir("", "go-storage-walk-test")
 	assert.NoError(t, err)
 	defer os.RemoveAll(dir)
 
-	assert.NoError(t, os.Mkdir(filepath.Join(dir, "foo"), 0755))
+	assert.NoError(t, os.Mkdir(filepath.Join(dir, "foo"), 0o755))
 	_, err = os.Create(filepath.Join(dir, "foo", "bar"))
 	assert.NoError(t, err)
 	_, err = os.Create(filepath.Join(dir, "baz"))

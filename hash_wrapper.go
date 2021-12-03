@@ -39,6 +39,7 @@ func (hfs *hashWrapper) Open(ctx context.Context, path string, options *ReaderOp
 	if err != nil {
 		return nil, err
 	}
+
 	return hfs.fs.Open(ctx, v, options)
 }
 
@@ -48,6 +49,7 @@ func (hfs *hashWrapper) Attributes(ctx context.Context, path string, options *Re
 	if err != nil {
 		return nil, err
 	}
+
 	return hfs.fs.Attributes(ctx, v, options)
 }
 
@@ -70,6 +72,7 @@ func (w *hashWriteCloser) Write(b []byte) (int, error) {
 	if err != nil {
 		return n, err
 	}
+
 	return w.hfs.h.Write(b) // never returns an error
 }
 
@@ -90,6 +93,7 @@ func (w *hashWriteCloser) Close() (err error) {
 	}()
 
 	_, err = io.Copy(fsw, w.buf)
+
 	return err
 }
 
@@ -111,6 +115,7 @@ func (hfs *hashWrapper) Delete(ctx context.Context, path string) error {
 	if err := hfs.fs.Delete(ctx, path); err != nil {
 		return err
 	}
+
 	return hfs.gs.Delete(path)
 }
 

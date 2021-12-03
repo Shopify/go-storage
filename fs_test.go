@@ -12,6 +12,7 @@ import (
 )
 
 func testOpenExists(t *testing.T, fs storage.FS, path string, content string) {
+	t.Helper()
 	ctx := context.Background()
 
 	f, err := fs.Open(ctx, path, nil)
@@ -35,7 +36,9 @@ func testOpenExists(t *testing.T, fs storage.FS, path string, content string) {
 }
 
 func testOpenNotExists(t *testing.T, fs storage.FS, path string) {
+	t.Helper()
 	ctx := context.Background()
+
 	_, err := fs.Open(ctx, path, nil)
 	assert.Errorf(t, err, "storage %s: path does not exist", path)
 
@@ -44,6 +47,7 @@ func testOpenNotExists(t *testing.T, fs storage.FS, path string) {
 }
 
 func testCreate(t *testing.T, fs storage.FS, path string, content string) {
+	t.Helper()
 	ctx := context.Background()
 
 	wc, err := fs.Create(ctx, path, nil)
@@ -59,6 +63,7 @@ func testCreate(t *testing.T, fs storage.FS, path string, content string) {
 }
 
 func testDelete(t *testing.T, fs storage.FS, path string) {
+	t.Helper()
 	ctx := context.Background()
 
 	testCreate(t, fs, path, "foo")
@@ -69,9 +74,12 @@ func testDelete(t *testing.T, fs storage.FS, path string) {
 	testOpenNotExists(t, fs, path)
 }
 
-func testRemoveAll(t testing.TB, fs storage.FS) {
-	err := fs.Walk(context.Background(), "", func(path string) error {
-		return fs.Delete(context.Background(), path)
+func testRemoveAll(tb testing.TB, fs storage.FS) {
+	tb.Helper()
+	ctx := context.Background()
+
+	err := fs.Walk(ctx, "", func(path string) error {
+		return fs.Delete(ctx, path)
 	})
-	assert.NoError(t, err)
+	assert.NoError(tb, err)
 }

@@ -29,7 +29,7 @@ func (p *prefixWrapper) Open(ctx context.Context, path string, options *ReaderOp
 	return p.fs.Open(ctx, p.addPrefix(path), options)
 }
 
-// Attributes() implements FS.
+// Attributes implements FS.
 func (p *prefixWrapper) Attributes(ctx context.Context, path string, options *ReaderOptions) (*Attributes, error) {
 	return p.fs.Attributes(ctx, p.addPrefix(path), options)
 }
@@ -48,6 +48,7 @@ func (p *prefixWrapper) Delete(ctx context.Context, path string) error {
 func (p *prefixWrapper) Walk(ctx context.Context, path string, fn WalkFn) error {
 	return p.fs.Walk(ctx, p.addPrefix(path), func(path string) error {
 		path = strings.TrimPrefix(path, p.prefix)
+
 		return fn(path)
 	})
 }

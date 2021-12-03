@@ -17,5 +17,6 @@ func FromURL(path string) FS {
 	if strings.HasPrefix(path, "file://") {
 		return NewLocalFS(strings.TrimPrefix(path, "file://"))
 	}
+
 	return NewLocalFS(path)
 }

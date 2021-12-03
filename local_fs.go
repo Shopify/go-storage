@@ -11,7 +11,7 @@ import (
 
 // DefaultLocalCreatePathMode is the default os.FileMode used when creating directories
 // during a localFS.Create call.
-const DefaultLocalCreatePathMode = os.FileMode(0755)
+const DefaultLocalCreatePathMode = os.FileMode(0o755)
 
 // LocalCreatePathMode is the os.FileMode used when creating directories via localFS.Create
 var LocalCreatePathMode = DefaultLocalCreatePathMode
@@ -21,6 +21,7 @@ type localFS string
 
 func NewLocalFS(path string) FS {
 	fs := localFS(path)
+
 	return &fs
 }
 
@@ -34,6 +35,7 @@ func (l *localFS) wrapError(path string, err error) error {
 			Path: path,
 		}
 	}
+
 	return err
 }
 
@@ -103,6 +105,7 @@ func (l *localFS) Create(_ context.Context, path string, options *WriterOptions)
 			}
 		}
 	}
+
 	return f, nil
 }
 
@@ -120,8 +123,10 @@ func (l *localFS) Walk(_ context.Context, path string, fn WalkFn) error {
 
 		if !f.IsDir() {
 			path = strings.TrimPrefix(path, string(*l))
+
 			return fn(path)
 		}
+
 		return nil
 	})
 }

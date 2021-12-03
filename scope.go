@@ -36,5 +36,6 @@ func (s Scope) String() string {
 	if s.Has(ScopeSignURL) {
 		scopes = append(scopes, "sign")
 	}
+
 	return strings.Join(scopes, ",")
 }
