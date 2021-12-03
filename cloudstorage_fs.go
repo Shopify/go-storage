@@ -62,7 +62,7 @@ func (c *cloudStorageFS) Open(ctx context.Context, path string, options *ReaderO
 	f, err := b.Object(path).NewReader(ctx)
 	if err != nil {
 		if errors.Is(err, gstorage.ErrObjectNotExist) {
-			return nil, &notExistError{
+			return nil, &NotExistError{
 				Path: path,
 			}
 		}

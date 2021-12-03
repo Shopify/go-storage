@@ -31,7 +31,7 @@ func (l *localFS) fullPath(path string) string {
 
 func (l *localFS) wrapError(path string, err error) error {
 	if os.IsNotExist(err) {
-		return &notExistError{
+		return &NotExistError{
 			Path: path,
 		}
 	}
