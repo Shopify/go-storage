@@ -22,7 +22,7 @@ linters:
     - deadcode
     - errcheck
     - goimports
-    - golint
+    - revive
     - gosimple
     - govet
     - ineffassign
