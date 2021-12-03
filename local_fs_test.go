@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/Shopify/go-storage"
+	"github.com/Shopify/go-storage/internal/testutils"
 )
 
 func withLocal(cb func(storage.FS)) {
@@ -21,19 +22,19 @@ func withLocal(cb func(storage.FS)) {
 
 func TestLocalOpen(t *testing.T) {
 	withLocal(func(fs storage.FS) {
-		testOpenNotExists(t, fs, "foo")
+		testutils.OpenNotExists(t, fs, "foo")
 	})
 }
 
 func TestLocalCreate(t *testing.T) {
 	withLocal(func(fs storage.FS) {
-		testCreate(t, fs, "foo", "")
-		testCreate(t, fs, "foo", "bar")
+		testutils.Create(t, fs, "foo", "")
+		testutils.Create(t, fs, "foo", "bar")
 	})
 }
 
 func TestLocalDelete(t *testing.T) {
 	withLocal(func(fs storage.FS) {
-		testDelete(t, fs, "foo")
+		testutils.Delete(t, fs, "foo")
 	})
 }

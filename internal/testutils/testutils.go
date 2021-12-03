@@ -1,4 +1,4 @@
-package storage_test
+package testutils
 
 import (
 	"context"
@@ -11,7 +11,7 @@ import (
 	"github.com/Shopify/go-storage"
 )
 
-func testOpenExists(t *testing.T, fs storage.FS, path string, content string) {
+func OpenExists(t *testing.T, fs storage.FS, path string, content string) {
 	t.Helper()
 	ctx := context.Background()
 
@@ -35,7 +35,7 @@ func testOpenExists(t *testing.T, fs storage.FS, path string, content string) {
 	assert.NoError(t, err)
 }
 
-func testOpenNotExists(t *testing.T, fs storage.FS, path string) {
+func OpenNotExists(t *testing.T, fs storage.FS, path string) {
 	t.Helper()
 	ctx := context.Background()
 
@@ -46,7 +46,7 @@ func testOpenNotExists(t *testing.T, fs storage.FS, path string) {
 	assert.Errorf(t, err, "storage %s: path does not exist", path)
 }
 
-func testCreate(t *testing.T, fs storage.FS, path string, content string) {
+func Create(t *testing.T, fs storage.FS, path string, content string) {
 	t.Helper()
 	ctx := context.Background()
 
@@ -59,22 +59,22 @@ func testCreate(t *testing.T, fs storage.FS, path string, content string) {
 	err = wc.Close()
 	assert.NoError(t, err)
 
-	testOpenExists(t, fs, path, content)
+	OpenExists(t, fs, path, content)
 }
 
-func testDelete(t *testing.T, fs storage.FS, path string) {
+func Delete(t *testing.T, fs storage.FS, path string) {
 	t.Helper()
 	ctx := context.Background()
 
-	testCreate(t, fs, path, "foo")
+	Create(t, fs, path, "foo")
 
 	err := fs.Delete(ctx, path)
 	assert.NoError(t, err)
 
-	testOpenNotExists(t, fs, path)
+	OpenNotExists(t, fs, path)
 }
 
-func testRemoveAll(tb testing.TB, fs storage.FS) {
+func RemoveAll(tb testing.TB, fs storage.FS) {
 	tb.Helper()
 	ctx := context.Background()
 

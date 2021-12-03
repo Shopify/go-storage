@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/Shopify/go-storage"
+	"github.com/Shopify/go-storage/internal/testutils"
 )
 
 func withCache(options *storage.CacheOptions, cb func(fs storage.FS, src storage.FS, cache storage.FS)) {
@@ -30,37 +31,37 @@ func withFileCache(options *storage.CacheOptions, cb func(fs storage.FS, src sto
 
 func TestCacheWrapper_Open(t *testing.T) {
 	withCache(nil, func(fs storage.FS, src storage.FS, cache storage.FS) {
-		testOpenNotExists(t, fs, "foo")
+		testutils.OpenNotExists(t, fs, "foo")
 	})
 }
 
 func TestCacheWrapper_Create(t *testing.T) {
 	withCache(nil, func(fs storage.FS, src storage.FS, cache storage.FS) {
-		testCreate(t, fs, "foo", "")
-		testOpenExists(t, src, "foo", "")
-		testOpenExists(t, cache, "foo", "")
+		testutils.Create(t, fs, "foo", "")
+		testutils.OpenExists(t, src, "foo", "")
+		testutils.OpenExists(t, cache, "foo", "")
 
-		testCreate(t, fs, "foo", "bar")
-		testOpenExists(t, src, "foo", "bar")
-		testOpenExists(t, cache, "foo", "bar")
+		testutils.Create(t, fs, "foo", "bar")
+		testutils.OpenExists(t, src, "foo", "bar")
+		testutils.OpenExists(t, cache, "foo", "bar")
 	})
 }
 
 func TestCacheWrapper_Create_fileCache(t *testing.T) {
 	withFileCache(nil, func(fs storage.FS, src storage.FS, cache storage.FS) {
-		testCreate(t, fs, "foo", "")
-		testOpenExists(t, src, "foo", "")
-		testOpenExists(t, cache, "foo", "")
+		testutils.Create(t, fs, "foo", "")
+		testutils.OpenExists(t, src, "foo", "")
+		testutils.OpenExists(t, cache, "foo", "")
 
-		testCreate(t, fs, "foo", "bar")
-		testOpenExists(t, src, "foo", "bar")
-		testOpenExists(t, cache, "foo", "bar")
+		testutils.Create(t, fs, "foo", "bar")
+		testutils.OpenExists(t, src, "foo", "bar")
+		testutils.OpenExists(t, cache, "foo", "bar")
 	})
 }
 
 func TestCacheWrapper_Delete(t *testing.T) {
 	withCache(nil, func(fs storage.FS, src storage.FS, cache storage.FS) {
-		testDelete(t, fs, "foo")
+		testutils.Delete(t, fs, "foo")
 	})
 }
 
@@ -70,7 +71,7 @@ func TestCacheWrapper_CacheOptions_MaxAge(t *testing.T) {
 	}
 
 	withCache(options, func(fs storage.FS, src storage.FS, cache storage.FS) {
-		testCreate(t, fs, "foo", "")
+		testutils.Create(t, fs, "foo", "")
 
 		ctx := context.Background()
 		f, err := fs.Open(ctx, "foo", nil)
@@ -94,8 +95,8 @@ func TestCacheWrapper_CacheOptions_NoData(t *testing.T) {
 	}
 
 	withCache(options, func(fs storage.FS, src storage.FS, cache storage.FS) {
-		testCreate(t, fs, "foo", "bar")
+		testutils.Create(t, fs, "foo", "bar")
 
-		testOpenExists(t, cache, "foo", "") // No content actually stored
+		testutils.OpenExists(t, cache, "foo", "") // No content actually stored
 	})
 }
