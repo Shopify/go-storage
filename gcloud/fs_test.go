@@ -1,4 +1,4 @@
-package storage_test
+package gcloud_test
 
 import (
 	"context"
@@ -14,13 +14,14 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/Shopify/go-storage"
+	"github.com/Shopify/go-storage/gcloud"
 	"github.com/Shopify/go-storage/internal/testutils"
 )
 
-func BenchmarkCloudStorageFS(b *testing.B) {
+func BenchmarkFS(b *testing.B) {
 	ctx := context.Background()
 
-	withCloudStorageFS(b, func(fs storage.FS) {
+	withFS(b, func(fs storage.FS) {
 		b.Run("create", func(b *testing.B) {
 			for i := 0; i < b.N; i++ {
 				path := fmt.Sprintf("benchmark-%d", time.Now().Nanosecond())
@@ -71,8 +72,8 @@ func BenchmarkCloudStorageFS(b *testing.B) {
 	})
 }
 
-func Test_cloudStorageFS_URL(t *testing.T) {
-	withCloudStorageFS(t, func(fs storage.FS) {
+func Test_fs_URL(t *testing.T) {
+	withFS(t, func(fs storage.FS) {
 		path := "foo"
 		contents := "test"
 		testutils.Create(t, fs, path, contents)
@@ -92,8 +93,8 @@ func Test_cloudStorageFS_URL(t *testing.T) {
 	})
 }
 
-func Test_cloudStorageFS_Open(t *testing.T) {
-	withCloudStorageFS(t, func(fs storage.FS) {
+func Test_fs_Open(t *testing.T) {
+	withFS(t, func(fs storage.FS) {
 		path := "foo"
 		contents := "test"
 		testutils.Create(t, fs, path, contents)
@@ -101,16 +102,16 @@ func Test_cloudStorageFS_Open(t *testing.T) {
 	})
 }
 
-func Test_cloudStorageFS_Create(t *testing.T) {
-	withCloudStorageFS(t, func(fs storage.FS) {
+func Test_fs_Create(t *testing.T) {
+	withFS(t, func(fs storage.FS) {
 		path := "foo"
 		contents := "test"
 		testutils.Create(t, fs, path, contents)
 	})
 }
 
-func Test_cloudStorageFS_Delete(t *testing.T) {
-	withCloudStorageFS(t, func(fs storage.FS) {
+func Test_fs_Delete(t *testing.T) {
+	withFS(t, func(fs storage.FS) {
 		path := "foo"
 		contents := "test"
 		testutils.Create(t, fs, path, contents)
@@ -118,18 +119,18 @@ func Test_cloudStorageFS_Delete(t *testing.T) {
 	})
 }
 
-func withCloudStorageFS(tb testing.TB, cb func(fs storage.FS)) {
+func withFS(tb testing.TB, cb func(fs storage.FS)) {
 	tb.Helper()
 
 	if os.Getenv("GOOGLE_APPLICATION_CREDENTIALS") == "" {
 		tb.Skip("skipping cloud storage tests, GOOGLE_APPLICATION_CREDENTIALS is empty")
 	}
-	bucket := os.Getenv("GOOGLE_CLOUDSTORAGE_TEST_BUCKET")
+	bucket := os.Getenv("STORAGE_GCLOUD_TEST_BUCKET")
 	if bucket == "" {
-		tb.Skip("skipping cloud storage tests, GOOGLE_CLOUDSTORAGE_TEST_BUCKET is empty")
+		tb.Skip("skipping cloud storage tests, STORAGE_GCLOUD_TEST_BUCKET is empty")
 	}
 
-	fs := storage.NewCloudStorageFS(bucket, nil)
+	fs := gcloud.NewFS(bucket, nil)
 
 	randomBytes := make([]byte, 16)
 	_, err := rand.Read(randomBytes)
@@ -142,7 +143,7 @@ func withCloudStorageFS(tb testing.TB, cb func(fs storage.FS)) {
 	cb(fs)
 }
 
-func Test_ResolveCloudStorageScope(t *testing.T) {
+func Test_ResolveScope(t *testing.T) {
 	tests := map[storage.Scope]storage.Scope{
 		storage.ScopeRead:                         storage.ScopeRead,
 		storage.ScopeWrite:                        storage.ScopeRW,
@@ -151,7 +152,7 @@ func Test_ResolveCloudStorageScope(t *testing.T) {
 	}
 	for input, output := range tests {
 		t.Run(input.String(), func(t *testing.T) {
-			require.Equal(t, output, storage.ResolveCloudStorageScope(input))
+			require.Equal(t, output, gcloud.ResolveScope(input))
 		})
 	}
 }
