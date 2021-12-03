@@ -78,7 +78,7 @@ type SignedURLOptions struct {
 	Method string
 }
 
-func (o *SignedURLOptions) applyDefaults() {
+func (o *SignedURLOptions) ApplyDefaults() {
 	if o.Expiry == 0 {
 		o.Expiry = DefaultSignedURLExpiry
 	}

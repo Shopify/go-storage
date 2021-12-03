@@ -39,7 +39,7 @@ func (c *cloudStorageFS) URL(ctx context.Context, path string, options *SignedUR
 	if options == nil {
 		options = &SignedURLOptions{}
 	}
-	options.applyDefaults()
+	options.ApplyDefaults()
 
 	b, err := c.bucketHandle(ctx, ScopeSignURL)
 	if err != nil {
