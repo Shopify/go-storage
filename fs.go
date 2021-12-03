@@ -1,5 +1,5 @@
 // Package storage provides types and functionality for abstracting storage systems
-// (local, in memory, S3, Google Cloud storage) into a common interface.
+// (local, in memory, Google Cloud storage) into a common interface.
 package storage
 
 import (

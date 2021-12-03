@@ -1,6 +1,6 @@
 # Storage
 
-storage is a Go package which abstracts file systems (local, in-memory, Google Cloud Storage, S3) into a few interfaces.  It includes convenience wrappers for simplifying common file system use cases such as caching, prefix isolation and more!
+storage is a Go package which abstracts file systems (local, in-memory, Google Cloud Storage) into a few interfaces.  It includes convenience wrappers for simplifying common file system use cases such as caching, prefix isolation and more!
 
 Forked from https://github.com/sajari/storage
 
@@ -102,19 +102,6 @@ CloudStorage is the default implementation of Google Cloud Storage.  This uses [
 ```go
 store := storage.NewCloudStorageFS("some-bucket")
 f, err := store.Open(context.Background(), "file.json", nil) // will fetch "gs://some-bucket/file.json"
-if err != nil {
-	// ...
-}
-// ...
-f.Close()
-```
-
-## S3
-
-S3 is the default implementation for AWS S3. This uses [aws-sdk-go/aws/session.NewSession](http://docs.aws.amazon.com/sdk-for-go/api/aws/session/#NewSession) for authentication.
- ```go
-store := storage.S3{Bucket:"some-bucket"}
-f, err := store.Open(context.Background(), "file.json", nil) // will fetch "s3://some-bucket/file.json
 if err != nil {
 	// ...
 }
