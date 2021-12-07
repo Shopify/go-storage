@@ -35,6 +35,7 @@ func (t *traceWrapper) Open(ctx context.Context, path string, options *ReaderOpt
 			}
 		}()
 	}
+
 	return t.fs.Open(ctx, path, options)
 }
 
@@ -49,6 +50,7 @@ func (t *traceWrapper) Attributes(ctx context.Context, path string, options *Rea
 			}
 		}()
 	}
+
 	return t.fs.Attributes(ctx, path, options)
 }
 
@@ -63,6 +65,7 @@ func (t *traceWrapper) Create(ctx context.Context, path string, options *WriterO
 			}
 		}()
 	}
+
 	return t.fs.Create(ctx, path, options)
 }
 
@@ -77,6 +80,7 @@ func (t *traceWrapper) Delete(ctx context.Context, path string) (err error) {
 			}
 		}()
 	}
+
 	return t.fs.Delete(ctx, path)
 }
 
@@ -95,5 +99,6 @@ func (t *traceWrapper) URL(ctx context.Context, path string, options *SignedURLO
 			}
 		}()
 	}
+
 	return t.fs.URL(ctx, path, options)
 }

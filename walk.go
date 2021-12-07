@@ -19,10 +19,12 @@ func List(ctx context.Context, w Walker, path string) ([]string, error) {
 	var out []string
 	if err := w.Walk(ctx, path, func(path string) error {
 		out = append(out, path)
+
 		return nil
 	}); err != nil {
 		return nil, err
 	}
+
 	return out, nil
 }
 
@@ -40,6 +42,7 @@ func WalkN(ctx context.Context, w Walker, path string, n int, fn WalkFn) error {
 			for f := range ch {
 				if err := fn(f); err != nil {
 					errCh <- err
+
 					break
 				}
 			}

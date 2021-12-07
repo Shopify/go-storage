@@ -117,24 +117,26 @@ func Test_cloudStorageFS_Delete(t *testing.T) {
 	})
 }
 
-func withCloudStorageFS(t testing.TB, cb func(fs storage.FS)) {
+func withCloudStorageFS(tb testing.TB, cb func(fs storage.FS)) {
+	tb.Helper()
+
 	if os.Getenv("GOOGLE_APPLICATION_CREDENTIALS") == "" {
-		t.Skip("skipping cloud storage tests, GOOGLE_APPLICATION_CREDENTIALS is empty")
+		tb.Skip("skipping cloud storage tests, GOOGLE_APPLICATION_CREDENTIALS is empty")
 	}
 	bucket := os.Getenv("GOOGLE_CLOUDSTORAGE_TEST_BUCKET")
 	if bucket == "" {
-		t.Skip("skipping cloud storage tests, GOOGLE_CLOUDSTORAGE_TEST_BUCKET is empty")
+		tb.Skip("skipping cloud storage tests, GOOGLE_CLOUDSTORAGE_TEST_BUCKET is empty")
 	}
 
 	fs := storage.NewCloudStorageFS(bucket, nil)
 
 	randomBytes := make([]byte, 16)
 	_, err := rand.Read(randomBytes)
-	require.NoError(t, err)
+	require.NoError(tb, err)
 	prefix := fmt.Sprintf("test-go-storage/%x/", sha1.New().Sum(randomBytes))
 
 	fs = storage.NewPrefixWrapper(fs, prefix)
-	defer testRemoveAll(t, fs)
+	defer testRemoveAll(tb, fs)
 
 	cb(fs)
 }

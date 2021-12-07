@@ -62,6 +62,7 @@ func (t *timeoutWrapper) Open(ctx context.Context, path string, options *ReaderO
 	if file, ok := out.(*File); ok {
 		return file, err
 	}
+
 	return nil, err
 }
 
@@ -73,6 +74,7 @@ func (t *timeoutWrapper) Attributes(ctx context.Context, path string, options *R
 	if attrs, ok := out.(*Attributes); ok {
 		return attrs, err
 	}
+
 	return nil, err
 }
 
@@ -84,6 +86,7 @@ func (t *timeoutWrapper) Create(ctx context.Context, path string, options *Write
 	if w, ok := out.(io.WriteCloser); ok {
 		return w, err
 	}
+
 	return nil, err
 }
 
@@ -92,6 +95,7 @@ func (t *timeoutWrapper) Delete(ctx context.Context, path string) error {
 	_, err := timeoutCall(ctx, t.write, func() (interface{}, error) {
 		return nil, t.fs.Delete(ctx, path)
 	})
+
 	return err
 }
 
@@ -107,5 +111,6 @@ func (t *timeoutWrapper) URL(ctx context.Context, path string, options *SignedUR
 	if url, ok := out.(string); ok {
 		return url, err
 	}
+
 	return "", err
 }

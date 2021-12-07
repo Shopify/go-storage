@@ -16,21 +16,54 @@ linters-settings:
       - ifElseChain
       - elseif
 
+issues:
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - contextcheck
+        - goconst
+        - gosec
+        - noctx
+
 linters:
   enable:
+    - asciicheck
     - bodyclose
+    - contextcheck
     - deadcode
     - errcheck
+    - errname
+    - errorlint
+    - exhaustive
+    - exportloopref
+    - forbidigo
+    - goconst
+    - gocritic
+    - gofmt
+    - gofumpt
     - goimports
-    - golint
+    - gomnd
+    - goprintffuncname
+    - gosec
     - gosimple
     - govet
     - ineffassign
+    - nilerr
+    - nlreturn
+    - noctx
+    - prealloc
+    - predeclared
+    - revive
     - sqlclosecheck
     - staticcheck
     - structcheck
+    - stylecheck
+    - tenv
+    - thelper
+    - tparallel
     - typecheck
     - unconvert
     - unused
     - varcheck
-    - gocritic
+    - wastedassign
+    - whitespace

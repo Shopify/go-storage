@@ -59,6 +59,7 @@ func (s *statsWrapper) Open(ctx context.Context, path string, options *ReaderOpt
 		s.status.Add(StatOpenErrors, 1)
 	}
 	s.status.Add(StatOpenTotal, 1)
+
 	return f, err
 }
 
@@ -69,6 +70,7 @@ func (s *statsWrapper) Attributes(ctx context.Context, path string, options *Rea
 		s.status.Add(StatAttrsErrors, 1)
 	}
 	s.status.Add(StatAttrsTotal, 1)
+
 	return a, err
 }
 
@@ -79,6 +81,7 @@ func (s *statsWrapper) Create(ctx context.Context, path string, options *WriterO
 		s.status.Add(StatCreateErrors, 1)
 	}
 	s.status.Add(StatCreateTotal, 1)
+
 	return wc, err
 }
 
@@ -89,6 +92,7 @@ func (s *statsWrapper) Delete(ctx context.Context, path string) error {
 		s.status.Add(StatDeleteErrors, 1)
 	}
 	s.status.Add(StatDeleteTotal, 1)
+
 	return err
 }
 
@@ -103,5 +107,6 @@ func (s *statsWrapper) URL(ctx context.Context, path string, options *SignedURLO
 		s.status.Add(StatURLErrors, 1)
 	}
 	s.status.Add(StatURLTotal, 1)
+
 	return url, err
 }

@@ -1,0 +1,38 @@
+#!/bin/sh
+
+# This script is intentionally written to be POSIX compliant to be as portable as possible
+
+set -e
+
+VERSION="${VERSION:-"1.43.0"}"
+VERSION_TAG="v${VERSION}"
+
+INSTALLER_URL="github.com/golangci/golangci-lint/cmd/golangci-lint"
+EXECUTABLE="$(basename "${INSTALLER_URL}")"
+
+INSTALL_PATH="${INSTALL_PATH:-"${HOME}/.local/share/${EXECUTABLE}/${VERSION}"}"
+EXECUTABLE_PATH="${INSTALL_PATH}/${EXECUTABLE}" # e.g. $HOME/.local/share/golangci/1.32.0/golangci-lint
+
+installed() {
+    [ -x "${EXECUTABLE_PATH}" ]
+}
+
+install() {
+    echo "Installing ${EXECUTABLE} version ${VERSION}" >&2
+
+    mkdir -p "${INSTALL_PATH}"
+    GOBIN="${INSTALL_PATH}" go install "${INSTALLER_URL}@${VERSION_TAG}"
+}
+
+case "$1" in
+    "--installed")
+        installed
+        ;;
+    "--install")
+        installed || install
+        ;;
+    *)
+        installed || install
+        exec "${EXECUTABLE_PATH}" "$@"
+        ;;
+esac

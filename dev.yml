@@ -11,8 +11,8 @@ up:
 
 commands:
   test: go test -race ./...
-  style:
-    run: bin/style
+  lint:
+    run: bin/golangci-lint run
     desc: Static verification using golangci or autofix issues when possible.
     syntax:
       optional: --fix

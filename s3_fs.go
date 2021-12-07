@@ -37,6 +37,7 @@ func (s *s3FS) Open(ctx context.Context, path string, options *ReaderOptions) (*
 				Path: path,
 			}
 		}
+
 		return nil, errors.Wrap(err, "s3: unable to fetch object")
 	}
 
@@ -83,6 +84,7 @@ func (s *s3FS) Create(ctx context.Context, path string, options *WriterOptions) 
 			BufferSize:      options.BufferSize,
 		}
 	}
+
 	return b.NewWriter(ctx, path, blobOpts)
 }
 
@@ -92,6 +94,7 @@ func (s *s3FS) Delete(ctx context.Context, path string) error {
 	if err != nil {
 		return err
 	}
+
 	return b.Delete(ctx, path)
 }
 
@@ -111,7 +114,7 @@ func (s *s3FS) Walk(ctx context.Context, path string, fn WalkFn) error {
 
 	for {
 		r, err := it.Next(ctx)
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			break
 		}
 		if err != nil {
@@ -123,6 +126,7 @@ func (s *s3FS) Walk(ctx context.Context, path string, fn WalkFn) error {
 			return err
 		}
 	}
+
 	return nil
 }
 

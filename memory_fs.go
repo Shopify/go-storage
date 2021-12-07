@@ -44,6 +44,7 @@ func (m *memoryFS) Open(_ context.Context, path string, options *ReaderOptions) 
 			Attributes: f.attrs,
 		}, nil
 	}
+
 	return nil, &notExistError{
 		Path: path,
 	}
@@ -57,8 +58,10 @@ func (m *memoryFS) Attributes(ctx context.Context, path string, options *ReaderO
 
 	if ok {
 		attrs := f.attrs
+
 		return &attrs, nil
 	}
+
 	return nil, &notExistError{
 		Path: path,
 	}
@@ -87,6 +90,7 @@ func (wf *writingFile) Close() error {
 		attrs: wf.options.Attributes,
 	}
 	wf.m.Unlock()
+
 	return nil
 }
 
@@ -95,6 +99,7 @@ func (m *memoryFS) Create(_ context.Context, path string, options *WriterOptions
 	if options == nil {
 		options = &WriterOptions{}
 	}
+
 	return &writingFile{
 		Buffer:  &bytes.Buffer{},
 		path:    path,
@@ -108,6 +113,7 @@ func (m *memoryFS) Delete(_ context.Context, path string) error {
 	m.Lock()
 	delete(m.data, path)
 	m.Unlock()
+
 	return nil
 }
 
@@ -127,6 +133,7 @@ func (m *memoryFS) Walk(_ context.Context, path string, fn WalkFn) error {
 			return err
 		}
 	}
+
 	return nil
 }
 
