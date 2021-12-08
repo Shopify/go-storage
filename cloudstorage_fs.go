@@ -2,13 +2,13 @@ package storage
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"sync"
 	"time"
 
 	gstorage "cloud.google.com/go/storage"
-	"github.com/pkg/errors"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/googleapi"
 	"google.golang.org/api/iterator"
@@ -209,7 +209,7 @@ func (c *cloudStorageFS) findCredentials(ctx context.Context, scope string) (*go
 func (c *cloudStorageFS) client(ctx context.Context, scope Scope) (*gstorage.Client, error) {
 	creds, err := c.findCredentials(ctx, cloudStorageScope(scope))
 	if err != nil {
-		return nil, errors.Wrap(err, "cloud storage: unable to retrieve default token source")
+		return nil, fmt.Errorf("finding credentials: %w", err)
 	}
 
 	var options []option.ClientOption
@@ -218,7 +218,7 @@ func (c *cloudStorageFS) client(ctx context.Context, scope Scope) (*gstorage.Cli
 
 	client, err := gstorage.NewClient(ctx, options...)
 	if err != nil {
-		return nil, errors.Wrap(err, "cloud storage: unable to build client")
+		return nil, fmt.Errorf("building client: %w", err)
 	}
 
 	return client, nil

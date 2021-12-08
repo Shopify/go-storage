@@ -4,7 +4,6 @@ go 1.17
 
 require (
 	cloud.google.com/go/storage v1.18.2
-	github.com/pkg/errors v0.9.0
 	github.com/stretchr/testify v1.6.1
 	golang.org/x/oauth2 v0.0.0-20211005180243-6b3c2da341f1
 	google.golang.org/api v0.58.0
