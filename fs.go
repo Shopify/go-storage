@@ -6,8 +6,6 @@ import (
 	"context"
 	"io"
 	"time"
-
-	"gocloud.dev/blob"
 )
 
 // File contains the metadata required to define a file (for reading).
@@ -62,6 +60,33 @@ type WriterOptions struct {
 	BufferSize int
 }
 
+// DefaultSignedURLExpiry is the default duration for SignedURLOptions.Expiry.
+const (
+	DefaultSignedURLExpiry = 1 * time.Hour
+	DefaultSignedURLMethod = "GET"
+)
+
+// SignedURLOptions are used to modify the behaviour of write operations.
+// Inspired from gocloud.dev/blob.SignedURLOptions
+// Not all options are supported by all FS
+type SignedURLOptions struct {
+	// Expiry sets how long the returned URL is valid for.
+	// Defaults to DefaultSignedURLExpiry.
+	Expiry time.Duration
+	// Method is the HTTP method that can be used on the URL; one of "GET", "PUT",
+	// or "DELETE". Defaults to "GET".
+	Method string
+}
+
+func (o *SignedURLOptions) applyDefaults() {
+	if o.Expiry == 0 {
+		o.Expiry = DefaultSignedURLExpiry
+	}
+	if o.Method == "" {
+		o.Method = DefaultSignedURLMethod
+	}
+}
+
 // FS is an interface which defines a virtual filesystem.
 type FS interface {
 	Walker
@@ -84,5 +109,3 @@ type FS interface {
 	// URL resolves a path to an addressable URL
 	URL(ctx context.Context, path string, options *SignedURLOptions) (string, error)
 }
-
-type SignedURLOptions blob.SignedURLOptions

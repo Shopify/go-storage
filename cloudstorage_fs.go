@@ -5,17 +5,15 @@ import (
 	"fmt"
 	"io"
 	"sync"
+	"time"
 
+	gstorage "cloud.google.com/go/storage"
 	"github.com/pkg/errors"
-	"gocloud.dev/blob"
-	"gocloud.dev/blob/gcsblob"
-	"gocloud.dev/gcerrors"
-	"gocloud.dev/gcp"
 	"golang.org/x/oauth2/google"
-	"google.golang.org/api/storage/v1"
+	"google.golang.org/api/googleapi"
+	"google.golang.org/api/iterator"
+	"google.golang.org/api/option"
 )
-
-var ErrCredentialsMissing = errors.New("credentials missing")
 
 // NewCloudStorageFS creates a Google Cloud Storage FS
 // credentials can be nil to use the default GOOGLE_APPLICATION_CREDENTIALS
@@ -29,26 +27,29 @@ func NewCloudStorageFS(bucket string, credentials *google.Credentials) FS {
 // cloudStorageFS implements FS and uses Google Cloud Storage as the underlying
 // file storage.
 type cloudStorageFS struct {
-	l            sync.RWMutex
-	bucket       *blob.Bucket
-	bucketName   string
+	bucketName  string
+	credentials *google.Credentials
+
+	bucketLock   sync.RWMutex
+	bucket       *gstorage.BucketHandle
 	bucketScopes Scope
-	credentials  *google.Credentials
 }
 
 func (c *cloudStorageFS) URL(ctx context.Context, path string, options *SignedURLOptions) (string, error) {
+	if options == nil {
+		options = &SignedURLOptions{}
+	}
+	options.applyDefaults()
+
 	b, err := c.bucketHandle(ctx, ScopeSignURL)
 	if err != nil {
 		return "", err
 	}
 
-	var blobOptions *blob.SignedURLOptions
-	if options != nil {
-		o := blob.SignedURLOptions(*options)
-		blobOptions = &o
-	}
-
-	return b.SignedURL(ctx, path, blobOptions)
+	return b.SignedURL(path, &gstorage.SignedURLOptions{
+		Method:  options.Method,
+		Expires: time.Now().Add(options.Expiry),
+	})
 }
 
 // Open implements FS.
@@ -58,9 +59,9 @@ func (c *cloudStorageFS) Open(ctx context.Context, path string, options *ReaderO
 		return nil, err
 	}
 
-	f, err := b.NewReader(ctx, path, nil)
+	f, err := b.Object(path).NewReader(ctx)
 	if err != nil {
-		if gcerrors.Code(err) == gcerrors.NotFound {
+		if errors.Is(err, gstorage.ErrObjectNotExist) {
 			return nil, &notExistError{
 				Path: path,
 			}
@@ -72,9 +73,10 @@ func (c *cloudStorageFS) Open(ctx context.Context, path string, options *ReaderO
 	return &File{
 		ReadCloser: f,
 		Attributes: Attributes{
-			ContentType: f.ContentType(),
-			Size:        f.Size(),
-			ModTime:     f.ModTime(),
+			ContentType:     f.Attrs.ContentType,
+			ContentEncoding: f.Attrs.ContentEncoding,
+			ModTime:         f.Attrs.LastModified,
+			Size:            f.Attrs.Size,
 		},
 	}, nil
 }
@@ -86,7 +88,7 @@ func (c *cloudStorageFS) Attributes(ctx context.Context, path string, options *R
 		return nil, err
 	}
 
-	a, err := b.Attributes(ctx, path)
+	a, err := b.Object(path).Attrs(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +97,8 @@ func (c *cloudStorageFS) Attributes(ctx context.Context, path string, options *R
 		ContentType:     a.ContentType,
 		ContentEncoding: a.ContentEncoding,
 		Metadata:        a.Metadata,
-		ModTime:         a.ModTime,
+		ModTime:         a.Updated,
+		CreationTime:    a.Created,
 		Size:            a.Size,
 	}, nil
 }
@@ -107,17 +110,27 @@ func (c *cloudStorageFS) Create(ctx context.Context, path string, options *Write
 		return nil, err
 	}
 
-	var blobOpts *blob.WriterOptions
+	w := b.Object(path).NewWriter(ctx)
+
 	if options != nil {
-		blobOpts = &blob.WriterOptions{
-			Metadata:        options.Attributes.Metadata,
-			ContentType:     options.Attributes.ContentType,
-			ContentEncoding: options.Attributes.ContentEncoding,
-			BufferSize:      options.BufferSize,
-		}
+		w.Metadata = options.Attributes.Metadata
+		w.ContentType = options.Attributes.ContentType
+		w.ContentEncoding = options.Attributes.ContentEncoding
+		w.ChunkSize = options.BufferSize
+	}
+	w.ChunkSize = c.chunkSize(w.ChunkSize)
+
+	return w, nil
+}
+
+func (c *cloudStorageFS) chunkSize(size int) int {
+	if size == 0 {
+		return googleapi.DefaultUploadChunkSize
+	} else if size > 0 {
+		return size
 	}
 
-	return b.NewWriter(ctx, path, blobOpts)
+	return 0 // disable buffering
 }
 
 // Delete implements FS.
@@ -127,7 +140,7 @@ func (c *cloudStorageFS) Delete(ctx context.Context, path string) error {
 		return err
 	}
 
-	return b.Delete(ctx, path)
+	return b.Object(path).Delete(ctx)
 }
 
 // Walk implements FS.
@@ -137,13 +150,13 @@ func (c *cloudStorageFS) Walk(ctx context.Context, path string, fn WalkFn) error
 		return err
 	}
 
-	it := bh.List(&blob.ListOptions{
+	it := bh.Objects(ctx, &gstorage.Query{
 		Prefix: path,
 	})
 
 	for {
-		r, err := it.Next(ctx)
-		if errors.Is(err, io.EOF) {
+		r, err := it.Next()
+		if errors.Is(err, iterator.Done) {
 			break
 		}
 		if err != nil {
@@ -151,7 +164,7 @@ func (c *cloudStorageFS) Walk(ctx context.Context, path string, fn WalkFn) error
 			return err
 		}
 
-		if err = fn(r.Key); err != nil {
+		if err = fn(r.Name); err != nil {
 			return err
 		}
 	}
@@ -162,11 +175,11 @@ func (c *cloudStorageFS) Walk(ctx context.Context, path string, fn WalkFn) error
 func cloudStorageScope(scope Scope) string {
 	switch {
 	case scope.Has(ScopeDelete):
-		return storage.DevstorageFullControlScope
+		return gstorage.ScopeFullControl
 	case scope.Has(ScopeWrite):
-		return storage.DevstorageReadWriteScope
+		return gstorage.ScopeReadWrite
 	case scope.Has(ScopeRead), scope.Has(ScopeSignURL):
-		return storage.DevstorageReadOnlyScope
+		return gstorage.ScopeReadOnly
 	default:
 		panic(fmt.Sprintf("unknown scope: '%s'", scope))
 	}
@@ -174,85 +187,55 @@ func cloudStorageScope(scope Scope) string {
 
 func ResolveCloudStorageScope(scope Scope) Scope {
 	switch cloudStorageScope(scope) {
-	case storage.DevstorageFullControlScope:
+	case gstorage.ScopeFullControl:
 		return ScopeRWD | scope
-	case storage.DevstorageReadWriteScope:
+	case gstorage.ScopeReadWrite:
 		return ScopeRW | scope
-	case storage.DevstorageReadOnlyScope:
+	case gstorage.ScopeReadOnly:
 		return ScopeRead | scope
 	default:
 		panic(fmt.Sprintf("unknown scope: '%s'", scope))
 	}
 }
 
-func (c *cloudStorageFS) findCredentials(ctx context.Context, scope Scope) (*google.Credentials, error) {
+func (c *cloudStorageFS) findCredentials(ctx context.Context, scope string) (*google.Credentials, error) {
 	if c.credentials != nil {
 		return c.credentials, nil
 	}
 
-	return google.FindDefaultCredentials(ctx, cloudStorageScope(scope))
+	return google.FindDefaultCredentials(ctx, scope)
 }
 
-func (c *cloudStorageFS) client(ctx context.Context, scope Scope) (*gcp.HTTPClient, *google.Credentials, error) {
-	creds, err := c.findCredentials(ctx, scope)
+func (c *cloudStorageFS) client(ctx context.Context, scope Scope) (*gstorage.Client, error) {
+	creds, err := c.findCredentials(ctx, cloudStorageScope(scope))
 	if err != nil {
-		return nil, nil, errors.Wrap(err, "cloud storage: unable to retrieve default token source")
+		return nil, errors.Wrap(err, "cloud storage: unable to retrieve default token source")
 	}
 
-	client, err := gcp.NewHTTPClient(gcp.DefaultTransport(), gcp.CredentialsTokenSource(creds))
+	var options []option.ClientOption
+	options = append(options, option.WithCredentials(creds))
+	options = append(options, option.WithScopes(cloudStorageScope(scope)))
+
+	client, err := gstorage.NewClient(ctx, options...)
 	if err != nil {
-		return nil, nil, errors.Wrap(err, "cloud storage: unable to build http client")
+		return nil, errors.Wrap(err, "cloud storage: unable to build client")
 	}
 
-	return client, creds, nil
+	return client, nil
 }
 
-func (c *cloudStorageFS) bucketOptions(creds *google.Credentials, scope Scope) (*gcsblob.Options, error) {
-	if !scope.Has(ScopeSignURL) {
-		return nil, nil
-	}
-
-	if creds == nil {
-		return nil, ErrCredentialsMissing
-	}
-
-	config, err := google.JWTConfigFromJSON(creds.JSON, cloudStorageScope(scope))
-	if err != nil {
-		return nil, errors.Wrap(err, "cloud storage: parse credentials")
-	}
-
-	return &gcsblob.Options{
-		PrivateKey:     config.PrivateKey,
-		GoogleAccessID: config.Email,
-	}, nil
-}
-
-func (c *cloudStorageFS) openBucket(ctx context.Context, scope Scope) (*blob.Bucket, error) {
-	client, creds, err := c.client(ctx, scope)
-	if err != nil {
-		return nil, err
-	}
-
-	options, err := c.bucketOptions(creds, scope)
-	if err != nil {
-		return nil, err
-	}
-
-	return gcsblob.OpenBucket(ctx, client, c.bucketName, options)
-}
-
-func (c *cloudStorageFS) bucketHandle(ctx context.Context, scope Scope) (*blob.Bucket, error) {
-	c.l.RLock()
+func (c *cloudStorageFS) bucketHandle(ctx context.Context, scope Scope) (*gstorage.BucketHandle, error) {
+	c.bucketLock.RLock()
 	scope |= c.bucketScopes // Expand requested scope to encompass existing scopes
 	if bucket := c.bucket; bucket != nil && c.bucketScopes.Has(scope) {
-		c.l.RUnlock()
+		c.bucketLock.RUnlock()
 
 		return bucket, nil
 	}
-	c.l.RUnlock()
+	c.bucketLock.RUnlock()
 
-	c.l.Lock()
-	defer c.l.Unlock()
+	c.bucketLock.Lock()
+	defer c.bucketLock.Unlock()
 	if c.bucket != nil && c.bucketScopes.Has(scope) { // Race condition
 		return c.bucket, nil
 	}
@@ -262,13 +245,13 @@ func (c *cloudStorageFS) bucketHandle(ctx context.Context, scope Scope) (*blob.B
 	// Also include any scope that was previously used.
 	scope = ResolveCloudStorageScope(c.bucketScopes | scope)
 
-	bucket, err := c.openBucket(ctx, scope)
+	client, err := c.client(ctx, scope)
 	if err != nil {
 		return nil, err
 	}
 
-	c.bucket = bucket
+	c.bucket = client.Bucket(c.bucketName)
 	c.bucketScopes = scope
 
-	return bucket, nil
+	return c.bucket, nil
 }
