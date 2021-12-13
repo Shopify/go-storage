@@ -12,11 +12,6 @@ func TestFromURL(t *testing.T) {
 	assert.IsType(t, (*cloudStorageFS)(nil), cs)
 	assert.Equal(t, "foo/bar", cs.(*cloudStorageFS).bucketName)
 
-	s3 := FromURL("s3://foo/bar")
-	assert.Implements(t, (*FS)(nil), s3)
-	assert.IsType(t, (*s3FS)(nil), s3)
-	assert.Equal(t, "foo/bar", s3.(*s3FS).bucket)
-
 	l := FromURL("/foo/bar")
 	assert.Implements(t, (*FS)(nil), l)
 	assert.IsType(t, (*localFS)(nil), l)
