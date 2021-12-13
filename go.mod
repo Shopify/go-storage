@@ -4,11 +4,11 @@ go 1.17
 
 require (
 	cloud.google.com/go/storage v1.18.2
-	github.com/aws/aws-sdk-go v1.28.0
-	github.com/pkg/errors v0.9.0
+	github.com/aws/aws-sdk-go v1.42.22
+	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.6.1
 	gocloud.dev v0.18.0
-	golang.org/x/net v0.0.0-20210503060351-7fd8e65b6420
+	golang.org/x/net v0.0.0-20210614182718-04defd469f4e
 	golang.org/x/oauth2 v0.0.0-20211005180243-6b3c2da341f1
 	google.golang.org/api v0.58.0
 )
@@ -22,7 +22,7 @@ require (
 	github.com/google/wire v0.4.0 // indirect
 	github.com/googleapis/gax-go v2.0.2+incompatible // indirect
 	github.com/googleapis/gax-go/v2 v2.1.1 // indirect
-	github.com/jmespath/go-jmespath v0.0.0-20180206201540-c2b33e8439af // indirect
+	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/stretchr/objx v0.2.0 // indirect
 	go.opencensus.io v0.23.0 // indirect
