@@ -5,7 +5,7 @@ go 1.17
 require (
 	cloud.google.com/go/storage v1.18.2
 	github.com/aws/aws-sdk-go v1.28.0
-	github.com/pkg/errors v0.9.0
+	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.6.1
 	gocloud.dev v0.18.0
 	golang.org/x/net v0.0.0-20210503060351-7fd8e65b6420
