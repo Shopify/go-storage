@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/Shopify/go-storage"
+	"github.com/Shopify/go-storage/internal/testutils"
 )
 
 func TestNewStatsWrapper(t *testing.T) {
@@ -17,7 +18,7 @@ func TestNewStatsWrapper(t *testing.T) {
 		testStats := fmt.Sprintf("test-go-storage-%x", sha1.New().Sum(randomBytes))
 		fs := storage.NewStatsWrapper(localFS, testStats)
 
-		testDelete(t, fs, "foo")
+		testutils.Delete(t, fs, "foo")
 
 		stats := expvar.Get(testStats).(*expvar.Map)
 		assert.Equal(t, int64(2), stats.Get(storage.StatOpenTotal).(*expvar.Int).Value())

@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/Shopify/go-storage"
+	"github.com/Shopify/go-storage/internal/testutils"
 )
 
 func BenchmarkCloudStorageFS(b *testing.B) {
@@ -74,7 +75,7 @@ func Test_cloudStorageFS_URL(t *testing.T) {
 	withCloudStorageFS(t, func(fs storage.FS) {
 		path := "foo"
 		contents := "test"
-		testCreate(t, fs, path, contents)
+		testutils.Create(t, fs, path, contents)
 
 		url, err := fs.URL(context.Background(), path, nil)
 		require.NoError(t, err)
@@ -95,8 +96,8 @@ func Test_cloudStorageFS_Open(t *testing.T) {
 	withCloudStorageFS(t, func(fs storage.FS) {
 		path := "foo"
 		contents := "test"
-		testCreate(t, fs, path, contents)
-		testOpenExists(t, fs, path, contents)
+		testutils.Create(t, fs, path, contents)
+		testutils.OpenExists(t, fs, path, contents)
 	})
 }
 
@@ -104,7 +105,7 @@ func Test_cloudStorageFS_Create(t *testing.T) {
 	withCloudStorageFS(t, func(fs storage.FS) {
 		path := "foo"
 		contents := "test"
-		testCreate(t, fs, path, contents)
+		testutils.Create(t, fs, path, contents)
 	})
 }
 
@@ -112,8 +113,8 @@ func Test_cloudStorageFS_Delete(t *testing.T) {
 	withCloudStorageFS(t, func(fs storage.FS) {
 		path := "foo"
 		contents := "test"
-		testCreate(t, fs, path, contents)
-		testDelete(t, fs, path)
+		testutils.Create(t, fs, path, contents)
+		testutils.Delete(t, fs, path)
 	})
 }
 
@@ -136,7 +137,7 @@ func withCloudStorageFS(tb testing.TB, cb func(fs storage.FS)) {
 	prefix := fmt.Sprintf("test-go-storage/%x/", sha1.New().Sum(randomBytes))
 
 	fs = storage.NewPrefixWrapper(fs, prefix)
-	defer testRemoveAll(tb, fs)
+	defer testutils.RemoveAll(tb, fs)
 
 	cb(fs)
 }

@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/Shopify/go-storage"
+	"github.com/Shopify/go-storage/internal/testutils"
 )
 
 const prefix = "testPrefix/"
@@ -16,26 +17,26 @@ func withPrefix(cb func(fs storage.FS, src storage.FS)) {
 
 func TestPrefixOpen(t *testing.T) {
 	withPrefix(func(fs storage.FS, src storage.FS) {
-		testOpenNotExists(t, fs, "foo")
+		testutils.OpenNotExists(t, fs, "foo")
 	})
 }
 
 func TestPrefixCreate(t *testing.T) {
 	withPrefix(func(fs storage.FS, src storage.FS) {
-		testCreate(t, fs, "foo", "")
-		testOpenExists(t, src, "testPrefix/foo", "")
+		testutils.Create(t, fs, "foo", "")
+		testutils.OpenExists(t, src, "testPrefix/foo", "")
 
-		testCreate(t, fs, "foo", "bar")
-		testOpenExists(t, src, "testPrefix/foo", "bar")
+		testutils.Create(t, fs, "foo", "bar")
+		testutils.OpenExists(t, src, "testPrefix/foo", "bar")
 	})
 }
 
 func TestPrefixDelete(t *testing.T) {
 	withPrefix(func(fs storage.FS, src storage.FS) {
-		testCreate(t, src, "testPrefix/foo", "bar")
-		testOpenExists(t, fs, "foo", "bar")
+		testutils.Create(t, src, "testPrefix/foo", "bar")
+		testutils.OpenExists(t, fs, "foo", "bar")
 
-		testDelete(t, fs, "foo")
-		testOpenNotExists(t, fs, "foo")
+		testutils.Delete(t, fs, "foo")
+		testutils.OpenNotExists(t, fs, "foo")
 	})
 }

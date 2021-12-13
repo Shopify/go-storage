@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/Shopify/go-storage"
+	"github.com/Shopify/go-storage/internal/testutils"
 )
 
 const slowDelay = 400 * time.Millisecond
@@ -20,7 +21,7 @@ func TestNewSlowWrapper(t *testing.T) {
 		start := time.Now()
 
 		// testCreate will do a Create, Open, and Attributes, so 3 calls
-		testCreate(t, fs, "foo", "bar")
+		testutils.Create(t, fs, "foo", "bar")
 		assert.WithinDuration(t, start.Add(slowDelay*3), time.Now(), slowDelay)
 	})
 }
