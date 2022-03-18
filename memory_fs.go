@@ -45,7 +45,7 @@ func (m *memoryFS) Open(_ context.Context, path string, options *ReaderOptions) 
 		}, nil
 	}
 
-	return nil, &notExistError{
+	return nil, &NotExistError{
 		Path: path,
 	}
 }
@@ -62,7 +62,7 @@ func (m *memoryFS) Attributes(ctx context.Context, path string, options *ReaderO
 		return &attrs, nil
 	}
 
-	return nil, &notExistError{
+	return nil, &NotExistError{
 		Path: path,
 	}
 }

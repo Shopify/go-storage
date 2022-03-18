@@ -100,7 +100,7 @@ f.Close()
 CloudStorage is the default implementation of Google Cloud Storage.  This uses [https://godoc.org/golang.org/x/oauth2/google#DefaultTokenSource](`google.DefaultTokenSource`) for autentication.
 
 ```go
-store := storage.NewCloudStorageFS("some-bucket")
+store := gcloud.NewFS("some-bucket", nil)
 f, err := store.Open(context.Background(), "file.json", nil) // will fetch "gs://some-bucket/file.json"
 if err != nil {
 	// ...
@@ -116,7 +116,7 @@ f.Close()
 To use Cloud Storage as a source file system, but cache all opened files in a local filesystem:
 
 ```go
-src := storage.NewCloudStorageFS("some-bucket")
+src := gcloud.NewFS("some-bucket", nil)
 local := storage.NewLocalFS("/scratch-space")
 
 fs := storage.NewCacheWrapper(src, local)
@@ -138,7 +138,7 @@ f.Close()
 This is particularly useful when distributing files across multiple regions or between cloud providers.  For instance, we could add the following code to the previous example:
 
 ```go
-mainSrc := storage.NewCloudStorage("some-bucket-in-another-region")
+mainSrc := gcloud.NewFS("some-bucket-in-another-region")
 fs2 := storage.NewCacheWrapper(mainSrc, fs) // fs is from previous snippet
 
 // Open will:
