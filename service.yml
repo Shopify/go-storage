@@ -1,5 +1,3 @@
-slack_channels:
-- courier-operations
 security:
   data_management:
     contains_pii: false
