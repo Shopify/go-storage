@@ -21,7 +21,7 @@ jobs:
     - name: golangci-lint
       uses: golangci/golangci-lint-action@v3
       with:
-        version: v1.43.0
+        version: v1.46.1
 
   mod-tidy:
     name: Go Mod Tidy
@@ -58,6 +58,7 @@ jobs:
       matrix:
         go-version:
         - 1.17.x
+        - 1.18.x
 
     steps:
     - name: Checkout
