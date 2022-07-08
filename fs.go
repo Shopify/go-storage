@@ -39,7 +39,12 @@ type Attributes struct {
 // ReaderOptions are used to modify the behaviour of read operations.
 // Inspired from gocloud.dev/blob.ReaderOptions
 // It is provided for future extensibility.
-type ReaderOptions struct{}
+type ReaderOptions struct {
+	// ReadCompressed controls whether the file must be uncompressed based on Content-Encoding.
+	// Only respected by Google Cloud Storage: https://cloud.google.com/storage/docs/transcoding
+	// Common pitfall: https://github.com/googleapis/google-cloud-go/issues/1743
+	ReadCompressed bool
+}
 
 // WriterOptions are used to modify the behaviour of write operations.
 // Inspired from gocloud.dev/blob.WriterOptions

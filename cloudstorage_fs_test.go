@@ -1,6 +1,8 @@
 package storage_test
 
 import (
+	"bytes"
+	"compress/gzip"
 	"context"
 	"crypto/rand"
 	"crypto/sha1"
@@ -118,6 +120,60 @@ func Test_cloudStorageFS_Delete(t *testing.T) {
 	})
 }
 
+func Test_cloudStorageFS_Content_Encoding(t *testing.T) {
+	ctx := context.Background()
+
+	withCloudStorageFS(t, func(fs storage.FS) {
+		path := "foo"
+
+		contentRaw := []byte("test")
+		contentCompressed := gzipCompress(contentRaw)
+
+		// Write compressed content
+
+		wc, err := fs.Create(ctx, path, &storage.WriterOptions{
+			Attributes: storage.Attributes{
+				// Don't let the client infer the CT as application/x-gzip
+				// https://github.com/googleapis/google-cloud-go/issues/1743#issuecomment-581639160
+				ContentType: "text/plain",
+
+				ContentEncoding: "gzip",
+			},
+		})
+		require.NoError(t, err)
+
+		_, err = wc.Write(contentCompressed)
+		require.NoError(t, err)
+
+		err = wc.Close()
+		require.NoError(t, err)
+
+		// Read content - auto-transcoding on: uncompressed according to Content-Encoding.
+
+		f, err := fs.Open(ctx, path, &storage.ReaderOptions{ReadCompressed: false})
+		require.NoError(t, err)
+
+		require.Equal(t, "", f.Attributes.ContentEncoding) // Payload is decoded, ContentEncoding must be unset
+
+		readContent, err := ioutil.ReadAll(f)
+		require.NoError(t, err)
+
+		require.Equal(t, contentRaw, readContent)
+
+		// Read content - auto-transcoding off: ignoring Content-Encoding.
+
+		f, err = fs.Open(ctx, path, &storage.ReaderOptions{ReadCompressed: true})
+		require.NoError(t, err)
+
+		require.Equal(t, "gzip", f.Attributes.ContentEncoding)
+
+		readContent, err = ioutil.ReadAll(f)
+		require.NoError(t, err)
+
+		require.Equal(t, contentCompressed, readContent)
+	})
+}
+
 func withCloudStorageFS(tb testing.TB, cb func(fs storage.FS)) {
 	tb.Helper()
 
@@ -154,4 +210,22 @@ func Test_ResolveCloudStorageScope(t *testing.T) {
 			require.Equal(t, output, storage.ResolveCloudStorageScope(input))
 		})
 	}
+}
+
+func gzipCompress(b []byte) []byte {
+	var buf bytes.Buffer
+
+	compressor := gzip.NewWriter(&buf)
+
+	_, err := compressor.Write(b)
+	if err != nil {
+		panic(err)
+	}
+
+	err = compressor.Close()
+	if err != nil {
+		panic(err)
+	}
+
+	return buf.Bytes()
 }
