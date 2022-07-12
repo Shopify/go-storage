@@ -59,7 +59,12 @@ func (c *cloudStorageFS) Open(ctx context.Context, path string, options *ReaderO
 		return nil, err
 	}
 
-	f, err := b.Object(path).NewReader(ctx)
+	obj := b.Object(path)
+	if options != nil {
+		obj = obj.ReadCompressed(options.ReadCompressed)
+	}
+
+	f, err := obj.NewReader(ctx)
 	if err != nil {
 		if errors.Is(err, gstorage.ErrObjectNotExist) {
 			return nil, &notExistError{
