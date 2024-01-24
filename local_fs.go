@@ -40,7 +40,7 @@ func (l *localFS) wrapError(path string, err error) error {
 }
 
 // Open implements FS.
-func (l *localFS) Open(_ context.Context, path string, options *ReaderOptions) (*File, error) {
+func (l *localFS) Open(_ context.Context, path string, _ *ReaderOptions) (*File, error) {
 	path = l.fullPath(path)
 
 	f, err := os.Open(path)
@@ -63,7 +63,7 @@ func (l *localFS) Open(_ context.Context, path string, options *ReaderOptions) (
 }
 
 // Attributes implements FS.
-func (l *localFS) Attributes(ctx context.Context, path string, options *ReaderOptions) (*Attributes, error) {
+func (l *localFS) Attributes(_ context.Context, path string, _ *ReaderOptions) (*Attributes, error) {
 	path = l.fullPath(path)
 
 	stat, err := os.Stat(path)
@@ -131,7 +131,7 @@ func (l *localFS) Walk(_ context.Context, path string, fn WalkFn) error {
 	})
 }
 
-func (l *localFS) URL(ctx context.Context, path string, options *SignedURLOptions) (string, error) {
+func (l *localFS) URL(_ context.Context, path string, _ *SignedURLOptions) (string, error) {
 	path = l.fullPath(path)
 	_, err := os.Stat(path)
 	if err != nil {

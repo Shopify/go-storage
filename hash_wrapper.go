@@ -54,7 +54,7 @@ func (hfs *hashWrapper) Attributes(ctx context.Context, path string, options *Re
 }
 
 // Walk implements Walker.
-func (hfs *hashWrapper) Walk(ctx context.Context, path string, fn WalkFn) error {
+func (hfs *hashWrapper) Walk(_ context.Context, _ string, _ WalkFn) error {
 	return errors.New("HashFS.Walk is not implemented")
 }
 
