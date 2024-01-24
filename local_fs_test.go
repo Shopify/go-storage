@@ -1,7 +1,6 @@
 package storage_test
 
 import (
-	"io/ioutil"
 	"os"
 	"testing"
 
@@ -10,7 +9,7 @@ import (
 )
 
 func withLocal(cb func(storage.FS)) {
-	dir, err := ioutil.TempDir("", "go-storage-local-test")
+	dir, err := os.MkdirTemp("", "go-storage-local-test")
 	if err != nil {
 		panic(err)
 	}

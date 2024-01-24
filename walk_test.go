@@ -2,7 +2,6 @@ package storage
 
 import (
 	"context"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -68,7 +67,7 @@ func TestWalkN(t *testing.T) {
 func withTestTree(t *testing.T, cb func(dir string)) {
 	t.Helper()
 
-	dir, err := ioutil.TempDir("", "go-storage-walk-test")
+	dir, err := os.MkdirTemp("", "go-storage-walk-test")
 	assert.NoError(t, err)
 	defer os.RemoveAll(dir)
 

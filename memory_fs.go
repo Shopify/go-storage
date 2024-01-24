@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"io"
-	"io/ioutil"
 	"strings"
 	"sync"
 	"time"
@@ -23,7 +22,7 @@ type memFile struct {
 }
 
 func (f *memFile) readCloser() io.ReadCloser {
-	return ioutil.NopCloser(bytes.NewReader(f.data))
+	return io.NopCloser(bytes.NewReader(f.data))
 }
 
 type memoryFS struct {
@@ -33,7 +32,7 @@ type memoryFS struct {
 }
 
 // Open implements FS.
-func (m *memoryFS) Open(_ context.Context, path string, options *ReaderOptions) (*File, error) {
+func (m *memoryFS) Open(_ context.Context, path string, _ *ReaderOptions) (*File, error) {
 	m.RLock()
 	f, ok := m.data[path]
 	m.RUnlock()
@@ -51,7 +50,7 @@ func (m *memoryFS) Open(_ context.Context, path string, options *ReaderOptions) 
 }
 
 // Attributes implements FS.
-func (m *memoryFS) Attributes(ctx context.Context, path string, options *ReaderOptions) (*Attributes, error) {
+func (m *memoryFS) Attributes(_ context.Context, path string, _ *ReaderOptions) (*Attributes, error) {
 	m.RLock()
 	f, ok := m.data[path]
 	m.RUnlock()
@@ -137,6 +136,6 @@ func (m *memoryFS) Walk(_ context.Context, path string, fn WalkFn) error {
 	return nil
 }
 
-func (m *memoryFS) URL(ctx context.Context, path string, options *SignedURLOptions) (string, error) {
+func (m *memoryFS) URL(_ context.Context, _ string, _ *SignedURLOptions) (string, error) {
 	return "", ErrNotImplemented
 }

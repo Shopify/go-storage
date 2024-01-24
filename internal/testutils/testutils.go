@@ -3,7 +3,6 @@ package testutils
 import (
 	"context"
 	"io"
-	"io/ioutil"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -18,7 +17,7 @@ func OpenExists(t *testing.T, fs storage.FS, path string, content string) {
 	f, err := fs.Open(ctx, path, nil)
 	assert.NoError(t, err)
 
-	b, err := ioutil.ReadAll(f)
+	b, err := io.ReadAll(f)
 	assert.NoError(t, err)
 
 	got := string(b)

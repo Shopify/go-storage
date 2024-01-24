@@ -7,7 +7,7 @@ import (
 	"crypto/rand"
 	"crypto/sha1"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"testing"
@@ -59,7 +59,7 @@ func BenchmarkCloudStorageFS(b *testing.B) {
 				r, err := fs.Open(ctx, path, nil)
 				require.NoError(b, err)
 
-				_, err = ioutil.ReadAll(r)
+				_, err = io.ReadAll(r)
 				require.NoError(b, err)
 
 				err = r.Close()
@@ -88,7 +88,7 @@ func Test_cloudStorageFS_URL(t *testing.T) {
 		require.Equal(t, resp.StatusCode, http.StatusOK)
 
 		defer resp.Body.Close()
-		data, err := ioutil.ReadAll(resp.Body)
+		data, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		require.Equal(t, contents, string(data))
 	})
@@ -155,7 +155,7 @@ func Test_cloudStorageFS_Content_Encoding(t *testing.T) {
 
 		require.Equal(t, "", f.Attributes.ContentEncoding) // Payload is decoded, ContentEncoding must be unset
 
-		readContent, err := ioutil.ReadAll(f)
+		readContent, err := io.ReadAll(f)
 		require.NoError(t, err)
 
 		require.Equal(t, contentRaw, readContent)
@@ -167,7 +167,7 @@ func Test_cloudStorageFS_Content_Encoding(t *testing.T) {
 
 		require.Equal(t, "gzip", f.Attributes.ContentEncoding)
 
-		readContent, err = ioutil.ReadAll(f)
+		readContent, err = io.ReadAll(f)
 		require.NoError(t, err)
 
 		require.Equal(t, contentCompressed, readContent)

@@ -5,7 +5,6 @@ on:
     tags:
     - v*
     branches:
-    - master
     - main
   pull_request:
 
@@ -16,12 +15,12 @@ jobs:
 
     steps:
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: golangci-lint
       uses: golangci/golangci-lint-action@v3
       with:
-        version: v1.46.1
+        version: v1.52.2
 
   mod-tidy:
     name: Go Mod Tidy
@@ -29,15 +28,15 @@ jobs:
 
     steps:
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Setup go
-      uses: actions/setup-go@v4.1.0
+      uses: actions/setup-go@v5.0.0
       with:
-        go-version: 1.17.x
+        go-version: 1.20.x
 
     - name: Cache
-      uses: actions/cache@v3.3.1
+      uses: actions/cache@v4.0.0
       with:
         path: ~/go/pkg/mod
         key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
@@ -57,20 +56,19 @@ jobs:
     strategy:
       matrix:
         go-version:
-        - 1.17.x
-        - 1.18.x
+        - 1.20.x
 
     steps:
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Setup go
-      uses: actions/setup-go@v4.1.0
+      uses: actions/setup-go@v5.0.0
       with:
         go-version: ${{ matrix.go-version }}
 
     - name: Cache
-      uses: actions/cache@v3.3.1
+      uses: actions/cache@v4.0.0
       with:
         path: ~/go/pkg/mod
         key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}

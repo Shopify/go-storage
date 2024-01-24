@@ -87,7 +87,7 @@ func (c *cloudStorageFS) Open(ctx context.Context, path string, options *ReaderO
 }
 
 // Attributes implements FS.
-func (c *cloudStorageFS) Attributes(ctx context.Context, path string, options *ReaderOptions) (*Attributes, error) {
+func (c *cloudStorageFS) Attributes(ctx context.Context, path string, _ *ReaderOptions) (*Attributes, error) {
 	b, err := c.bucketHandle(ctx, ScopeRead)
 	if err != nil {
 		return nil, err
