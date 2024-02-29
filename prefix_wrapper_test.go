@@ -16,7 +16,7 @@ func withPrefix(cb func(fs storage.FS, src storage.FS)) {
 }
 
 func TestPrefixOpen(t *testing.T) {
-	withPrefix(func(fs storage.FS, src storage.FS) {
+	withPrefix(func(fs storage.FS, _ storage.FS) {
 		testutils.OpenNotExists(t, fs, "foo")
 	})
 }
