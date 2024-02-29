@@ -30,7 +30,7 @@ func withFileCache(options *storage.CacheOptions, cb func(fs storage.FS, src sto
 }
 
 func TestCacheWrapper_Open(t *testing.T) {
-	withCache(nil, func(fs storage.FS, src storage.FS, cache storage.FS) {
+	withCache(nil, func(fs storage.FS, _ storage.FS, _ storage.FS) {
 		testutils.OpenNotExists(t, fs, "foo")
 	})
 }
@@ -60,7 +60,7 @@ func TestCacheWrapper_Create_fileCache(t *testing.T) {
 }
 
 func TestCacheWrapper_Delete(t *testing.T) {
-	withCache(nil, func(fs storage.FS, src storage.FS, cache storage.FS) {
+	withCache(nil, func(fs storage.FS, _ storage.FS, _ storage.FS) {
 		testutils.Delete(t, fs, "foo")
 	})
 }
@@ -70,7 +70,7 @@ func TestCacheWrapper_CacheOptions_MaxAge(t *testing.T) {
 		MaxAge: 500 * time.Millisecond,
 	}
 
-	withCache(options, func(fs storage.FS, src storage.FS, cache storage.FS) {
+	withCache(options, func(fs storage.FS, _ storage.FS, _ storage.FS) {
 		testutils.Create(t, fs, "foo", "")
 
 		ctx := context.Background()
@@ -94,7 +94,7 @@ func TestCacheWrapper_CacheOptions_NoData(t *testing.T) {
 		NoData: true,
 	}
 
-	withCache(options, func(fs storage.FS, src storage.FS, cache storage.FS) {
+	withCache(options, func(fs storage.FS, _ storage.FS, cache storage.FS) {
 		testutils.Create(t, fs, "foo", "bar")
 
 		testutils.OpenExists(t, cache, "foo", "") // No content actually stored

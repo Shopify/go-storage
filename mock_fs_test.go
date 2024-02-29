@@ -82,7 +82,7 @@ func Test_mockFS_Walk(t *testing.T) {
 	ctx := context.Background()
 	fs := storage.NewMockFS()
 	path := "foo"
-	fn := func(path string) error { return nil }
+	fn := func(_ string) error { return nil }
 
 	fs.On("Walk", ctx, path, mock.Anything).Return(nil)
 	err := fs.Walk(ctx, path, fn)

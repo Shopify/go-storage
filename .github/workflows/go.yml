@@ -20,7 +20,7 @@ jobs:
     - name: golangci-lint
       uses: golangci/golangci-lint-action@v4
       with:
-        version: v1.52.2
+        version: v1.56.2
 
   mod-tidy:
     name: Go Mod Tidy
@@ -33,7 +33,7 @@ jobs:
     - name: Setup go
       uses: actions/setup-go@v5.0.0
       with:
-        go-version: 1.20.x
+        go-version: 1.21.x
 
     - name: Cache
       uses: actions/cache@v4.0.0
@@ -45,9 +45,9 @@ jobs:
 
     - name: Tidy
       run: |
-        cp go.sum{,.old}
+        cp go.sum go.sum.old
         go mod tidy
-        diff go.sum{.old,}
+        diff go.sum.old go.sum
 
   test:
     name: Go ${{ matrix.go-version }} test
@@ -56,7 +56,7 @@ jobs:
     strategy:
       matrix:
         go-version:
-        - 1.20.x
+        - 1.21.x
 
     steps:
     - name: Checkout
