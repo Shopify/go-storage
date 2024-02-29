@@ -3,7 +3,7 @@ module github.com/Shopify/go-storage
 go 1.21
 
 require (
-	cloud.google.com/go/storage v1.37.0
+	cloud.google.com/go/storage v1.38.0
 	github.com/stretchr/testify v1.8.4
 	golang.org/x/oauth2 v0.17.0
 	google.golang.org/api v0.167.0
