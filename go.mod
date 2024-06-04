@@ -5,7 +5,7 @@ go 1.21
 require (
 	cloud.google.com/go/storage v1.41.0
 	github.com/stretchr/testify v1.9.0
-	golang.org/x/oauth2 v0.20.0
+	golang.org/x/oauth2 v0.21.0
 	google.golang.org/api v0.181.0
 )
 
