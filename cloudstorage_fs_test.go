@@ -174,6 +174,41 @@ func Test_cloudStorageFS_Content_Encoding(t *testing.T) {
 	})
 }
 
+func Test_cloudStorageFS_CustomTime(t *testing.T) {
+	ctx := context.Background()
+
+	withCloudStorageFS(t, func(fs storage.FS) {
+		path := "foo"
+
+		customTime := time.Date(2030, 1, 1, 0, 0, 0, 0, time.UTC)
+
+		wc, err := fs.Create(ctx, path, &storage.WriterOptions{
+			Attributes: storage.Attributes{
+				CustomTime: customTime,
+			},
+		})
+		require.NoError(t, err)
+
+		_, err = wc.Write([]byte(""))
+		require.NoError(t, err)
+
+		err = wc.Close()
+		require.NoError(t, err)
+
+		// Open()
+
+		f, err := fs.Open(ctx, path, nil)
+		require.NoError(t, err)
+		require.Zero(t, f.Attributes.CustomTime) // CustomTime is not available when reading an object.
+
+		// Attributes()
+
+		attrs, err := fs.Attributes(ctx, path, nil)
+		require.NoError(t, err)
+		require.Equal(t, customTime, attrs.CustomTime)
+	})
+}
+
 func withCloudStorageFS(tb testing.TB, cb func(fs storage.FS)) {
 	tb.Helper()
 

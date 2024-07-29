@@ -32,6 +32,8 @@ type Attributes struct {
 	ModTime time.Time
 	// CreationTime is the time the blob object was created.
 	CreationTime time.Time
+	// CustomTime is a special time attribute that can have multiple purposes.
+	CustomTime time.Time
 	// Size is the size of the object in bytes.
 	Size int64
 }

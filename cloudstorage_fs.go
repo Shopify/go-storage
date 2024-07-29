@@ -104,6 +104,7 @@ func (c *cloudStorageFS) Attributes(ctx context.Context, path string, _ *ReaderO
 		Metadata:        a.Metadata,
 		ModTime:         a.Updated,
 		CreationTime:    a.Created,
+		CustomTime:      a.CustomTime,
 		Size:            a.Size,
 	}, nil
 }
@@ -122,6 +123,7 @@ func (c *cloudStorageFS) Create(ctx context.Context, path string, options *Write
 		w.ContentType = options.Attributes.ContentType
 		w.ContentEncoding = options.Attributes.ContentEncoding
 		w.ChunkSize = options.BufferSize
+		w.CustomTime = options.Attributes.CustomTime
 	}
 	w.ChunkSize = c.chunkSize(w.ChunkSize)
 
